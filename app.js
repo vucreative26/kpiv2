@@ -2,6 +2,8 @@ import {api} from './api.js';
 import {getState,setState,setData,selectedWeek} from './state.js';
 import {today,currentPeriod,esc,money,minutesLabel,statusLabel,priorityLabel,periodLabel,weeksOfMonth,monthDays,formatDate,shortDate,dayName,progressForSubtask,progressForKpi,percent,includesSearch,csv,download} from './utils.js';
 
+const APP_VERSION='2026.09.17-1438';
+
 const $=selector=>document.querySelector(selector);
 const S=()=>getState();
 const titles={dashboard:['Tổng quan','Bức tranh kế hoạch và thực thi trong tháng'],month:['Kế hoạch tháng','Phân bổ Sub-task vào từng tuần'],week:['Kế hoạch tuần','Phân bổ Task vào ngày và buổi'],kpi:['KPI công việc','Phân rã KPI thành Sub-task và Task'],calendar:['Lịch tháng & Note','Xem việc theo ngày, lịch cá nhân và ghi chú'],urgent:['Việc gấp','Các yêu cầu phát sinh ngoài kế hoạch'],salary:['Bảng lương','Tổng hợp thu nhập theo tháng'],reports:['Báo cáo','Tổng kết công việc theo tháng và năm']};
