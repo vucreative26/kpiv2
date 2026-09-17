@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260917-aurora">
+  <link rel="stylesheet" href="./styles.css?v=20260917-rail">
 </head>
 <body>
   <section id="auth" class="auth-shell">
@@ -28,23 +28,24 @@
     <aside class="sidebar">
       <div class="brand"><div class="logo small">✓</div><div><b>Flow KPI</b><small>Planner & Review</small></div></div>
       <nav id="mainNav">
-        <button data-view="dashboard" class="active">▦ <span>Tổng quan</span></button>
-        <button data-view="month">▤ <span>Kế hoạch tháng</span></button>
-        <button data-view="week">▥ <span>Kế hoạch tuần</span></button>
-        <button data-view="kpi">◎ <span>KPI công việc</span></button>
-        <button data-view="calendar">□ <span>Lịch tháng & Note</span></button>
-        <button data-view="urgent">⚡ <span>Việc gấp</span></button>
-        <button data-view="salary">₫ <span>Bảng lương</span></button>
-        <button data-view="reports">◔ <span>Báo cáo</span></button>
+        <button data-view="dashboard" class="active"><img src="./assets/icons/dashboard.svg" alt=""><span>Tổng quan</span></button>
+        <button data-view="month"><img src="./assets/icons/month-planner.svg" alt=""><span>Kế hoạch tháng</span></button>
+        <button data-view="week"><img src="./assets/icons/week-planner.svg" alt=""><span>Kế hoạch tuần</span></button>
+        <button data-view="kpi"><img src="./assets/icons/kpi.svg" alt=""><span>KPI công việc</span></button>
+        <button data-view="calendar"><img src="./assets/icons/calendar.svg" alt=""><span>Lịch tháng & Note</span></button>
+        <button data-view="urgent"><img src="./assets/icons/urgent.svg" alt=""><span>Việc gấp</span></button>
+        <button data-view="salary"><img src="./assets/icons/salary.svg" alt=""><span>Bảng lương</span></button>
+        <button data-view="reports"><img src="./assets/icons/report.svg" alt=""><span>Báo cáo</span></button>
       </nav>
       <div class="sidebar-bottom">
-        <button id="syncButton">↻ <span>Đồng bộ</span></button>
-        <button id="logoutButton">↪ <span>Đăng xuất</span></button>
+        <button id="syncButton"><img src="./assets/icons/sync.svg" alt=""><span>Đồng bộ</span></button>
+        <button id="logoutButton"><img src="./assets/icons/logout.svg" alt=""><span>Đăng xuất</span></button>
       </div>
     </aside>
 
     <main>
       <header class="topbar">
+        <button id="mobileMenuButton" class="mobile-menu-button" type="button" aria-label="Mở điều hướng">☰</button>
         <div><h1 id="viewTitle">Tổng quan</h1><p id="viewSubtitle"></p></div>
         <div class="top-actions">
           <div class="period-switch"><button id="prevMonth" aria-label="Tháng trước">‹</button><input id="period" type="month"><button id="nextMonth" aria-label="Tháng sau">›</button></div>
@@ -53,11 +54,12 @@
       </header>
       <div id="mobileNav" class="mobile-nav"></div>
       <section id="content" class="content" aria-live="polite"></section>
+      <button id="quickUrgent" class="quick-urgent" type="button" aria-label="Thêm nhanh việc gấp">+</button>
     </main>
   </div>
 
   <div id="overlay" class="overlay" hidden></div>
   <div id="toast" class="toast-wrap" aria-live="polite"></div>
-  <script type="module" src="./app.js?v=20260917-aurora"></script>
+  <script type="module" src="./app.js?v=20260917-rail"></script>
 </body>
 </html>
