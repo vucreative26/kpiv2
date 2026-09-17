@@ -2,7 +2,7 @@ import {api} from './api.js';
 import {getState,setState,setData,selectedWeek} from './state.js';
 import {today,currentPeriod,esc,money,minutesLabel,statusLabel,priorityLabel,periodLabel,weeksOfMonth,monthDays,formatDate,shortDate,dayName,progressForSubtask,progressForKpi,percent,includesSearch,csv,download} from './utils.js';
 
-const APP_VERSION='2026.09.17-1438';
+const APP_VERSION='2026.09.17-rail';
 
 const $=selector=>document.querySelector(selector);
 const S=()=>getState();
@@ -19,6 +19,7 @@ function openModal(title,body,onSubmit,{wide=false}={}){
   $('#overlay').querySelector('input,textarea,select')?.focus();
 }
 function closeModal(){$('#overlay').hidden=true;$('#overlay').replaceChildren();modalSubmit=null;}
+function closeMobileNav(){document.body.classList.remove('nav-open');}
 function input(name,label,value='',type='text',extra=''){return `<label>${esc(label)}<input name="${name}" type="${type}" value="${esc(value)}" ${extra}></label>`;}
 function select(name,label,value,options){return `<label>${esc(label)}<select name="${name}">${options.map(([v,t])=>`<option value="${v}" ${v===value?'selected':''}>${esc(t)}</option>`).join('')}</select></label>`;}
 function textarea(name,label,value=''){return `<label>${esc(label)}<textarea name="${name}">${esc(value)}</textarea></label>`;}
@@ -33,10 +34,11 @@ function context(){
 function render(){
   const s=S(),[title,sub]=titles[s.view];$('#viewTitle').textContent=title;$('#viewSubtitle').textContent=sub;$('#period').value=s.period;
   document.querySelectorAll('#mainNav button').forEach(b=>b.classList.toggle('active',b.dataset.view===s.view));
-  $('#mobileNav').innerHTML=['dashboard','month','week','kpi','calendar','urgent','salary','reports'].map(v=>`<button class="${v===s.view?'active':''}" data-nav="${v}">${titles[v][0]}</button>`).join('');
+  $('#mobileNav').innerHTML=['dashboard','month','week','kpi','calendar','urgent','salary','reports'].map(v=>`<button class="${v===s.view?'active':''}" data-nav="${v}"><img src="./assets/icons/${iconFor(v)}.svg" alt=""><span>${titles[v][0]}</span></button>`).join('');
   const renderers={dashboard:renderDashboard,month:renderMonth,week:renderWeek,kpi:renderKpi,calendar:renderCalendar,urgent:renderUrgent,salary:renderSalary,reports:renderReports};
   renderers[s.view]();
 }
+function iconFor(view){return ({dashboard:'dashboard',month:'month-planner',week:'week-planner',kpi:'kpi',calendar:'calendar',urgent:'urgent',salary:'salary',reports:'report'})[view]||'dashboard';}
 
 function renderDashboard(){
   const {data,period}=S(),{taskContext}=context(),tasks=data.tasks,kpis=data.kpis,subs=data.subtasks;
@@ -150,8 +152,8 @@ async function confirmDelete(table,id){const labels={kpis:'KPI và toàn bộ Su
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-open-sub]');if(!b)return;
   if(b.dataset.close!=null)return closeModal();
-  if(b.dataset.nav){setState({view:b.dataset.nav});return render();}
-  if(b.dataset.view){setState({view:b.dataset.view});return render();}
+  if(b.dataset.nav){setState({view:b.dataset.nav});closeMobileNav();return render();}
+  if(b.dataset.view){setState({view:b.dataset.view});closeMobileNav();return render();}
   if(b.dataset.week){setState({week:Number(b.dataset.week),view:'week'});return render();}
   const d=S().data;
   if(b.dataset.addKpi!=null)return kpiForm();
@@ -190,6 +192,9 @@ $('#period').addEventListener('change',async e=>{if(!/^\d{4}-\d{2}$/.test(e.targ
 function shiftMonth(n){const [y,m]=S().period.split('-').map(Number),d=new Date(y,m-1+n,1);setState({period:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,week:1});refresh(true);}
 $('#prevMonth').onclick=()=>shiftMonth(-1);$('#nextMonth').onclick=()=>shiftMonth(1);$('#syncButton').onclick=()=>refresh();
 $('#quickAdd').onclick=()=>{const v=S().view;if(v==='urgent')return urgentForm();if(v==='salary')return payrollForm();if(v==='calendar')return eventForm(today());return kpiForm();};
+$('#quickUrgent').onclick=()=>urgentForm();
+$('#mobileMenuButton').onclick=()=>document.body.classList.toggle('nav-open');
+document.addEventListener('click',e=>{if(!document.body.classList.contains('nav-open'))return;if(e.target.closest('.sidebar,#mobileMenuButton'))return;closeMobileNav();});
 $('#logoutButton').onclick=async()=>{await api.signOut();$('#app').hidden=true;$('#auth').hidden=false;};
 $('#loginForm').onsubmit=async e=>{e.preventDefault();$('#authMessage').textContent='';try{const user=await run(()=>api.signIn($('#email').value,$('#password').value));await enter(user);}catch(err){$('#authMessage').textContent=err.message;}};
 $('#demoLogin').onclick=async()=>enter(await api.demoSignIn());
