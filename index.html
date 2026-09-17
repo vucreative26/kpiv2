@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#5b4ce6">
+  <title>Flow KPI V2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <section id="auth" class="auth-shell">
+    <form id="loginForm" class="auth-card">
+      <div class="logo">✓</div>
+      <h1>Flow KPI <span>V2</span></h1>
+      <p>Lập kế hoạch, thực thi và tổng kết công việc ở một nơi.</p>
+      <label>Email<input id="email" type="email" autocomplete="username" required placeholder="name@company.com"></label>
+      <label>Mật khẩu<input id="password" type="password" autocomplete="current-password" required placeholder="••••••••"></label>
+      <button class="button primary wide">Đăng nhập</button>
+      <button id="demoLogin" type="button" class="button subtle wide">Dùng thử dữ liệu mẫu</button>
+      <small id="authMessage" role="status"></small>
+    </form>
+  </section>
+
+  <div id="app" class="app" hidden>
+    <aside class="sidebar">
+      <div class="brand"><div class="logo small">✓</div><div><b>Flow KPI</b><small>Planner & Review</small></div></div>
+      <nav id="mainNav">
+        <button data-view="dashboard" class="active">▦ <span>Tổng quan</span></button>
+        <button data-view="month">▤ <span>Kế hoạch tháng</span></button>
+        <button data-view="week">▥ <span>Kế hoạch tuần</span></button>
+        <button data-view="kpi">◎ <span>KPI công việc</span></button>
+        <button data-view="calendar">□ <span>Lịch tháng & Note</span></button>
+        <button data-view="urgent">⚡ <span>Việc gấp</span></button>
+        <button data-view="salary">₫ <span>Bảng lương</span></button>
+        <button data-view="reports">◔ <span>Báo cáo</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <button id="syncButton">↻ <span>Đồng bộ</span></button>
+        <button id="logoutButton">↪ <span>Đăng xuất</span></button>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div><h1 id="viewTitle">Tổng quan</h1><p id="viewSubtitle"></p></div>
+        <div class="top-actions">
+          <div class="period-switch"><button id="prevMonth" aria-label="Tháng trước">‹</button><input id="period" type="month"><button id="nextMonth" aria-label="Tháng sau">›</button></div>
+          <button id="quickAdd" class="button primary">+ Thêm mới</button>
+        </div>
+      </header>
+      <div id="mobileNav" class="mobile-nav"></div>
+      <section id="content" class="content" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <div id="overlay" class="overlay" hidden></div>
+  <div id="toast" class="toast-wrap" aria-live="polite"></div>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
