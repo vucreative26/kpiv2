@@ -1,5 +1,5 @@
-import {config} from '../config.js?v=20260921-clock10';
-import {currentMonth,today,uid} from './utils.js?v=20260921-clock10';
+import {config} from '../config.js?v=20260921-users12';
+import {currentMonth,today,uid} from './utils.js?v=20260921-users12';
 
 const tableNames={months:'flow_v3_months',kpis:'flow_v3_kpis',subtasks:'flow_v3_subtasks',tasks:'flow_v3_tasks',urgentTasks:'flow_v3_urgent_tasks',notes:'flow_v3_notes',timeEntries:'flow_v3_time_entries',payrolls:'flow_v3_payrolls',attendanceEvents:'flow_v3_attendance_events'};
 const camel=s=>s.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
@@ -7,6 +7,8 @@ const snake=s=>s.replace(/[A-Z]/g,c=>'_'+c.toLowerCase());
 const fromRow=r=>Object.fromEntries(Object.entries(r||{}).map(([k,v])=>[camel(k),v]));
 const toRow=r=>Object.fromEntries(Object.entries(r||{}).map(([k,v])=>[snake(k),v]));
 let client,user,demo=false;
+const loginEmail=value=>{const text=String(value||'').trim().toLowerCase();return text.includes('@')?text:`${text}@flowkpi.internal`};
+async function invokeAdmin(body){const {data,error}=await client.functions.invoke('flow-v3-admin',{body});if(error){let message=error.message;try{const detail=await error.context?.json();message=detail?.error||message}catch{}throw Error(message)}if(data?.error)throw Error(data.error);return data}
 
 function seed(){
   const p=currentMonth(),[year,month]=p.split('-').map(Number),mid='m-demo',d=today();
@@ -35,16 +37,19 @@ async function ensureMonth(period){const [year,month]=period.split('-').map(Numb
 
 export const api={
   async init(cb){await ensureClient();const {data}=await client.auth.getSession();user=data.session?.user||null;client.auth.onAuthStateChange((_e,s)=>{user=s?.user||null;cb(user)});cb(user)},
-  async signIn(email,password){await ensureClient();const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw Error(error.message);user=data.user;demo=false;return user},
+  async signIn(login,password){await ensureClient();const {data,error}=await client.auth.signInWithPassword({email:loginEmail(login),password});if(error)throw Error(error.message);user=data.user;demo=false;return user},
   async demoSignIn(){demo=true;user={id:'demo'};return user},
   async signOut(){if(!demo&&client)await client.auth.signOut();demo=false;user=null},
   isDemo:()=>demo,
-  async load(period){if(demo)return scoped(loadDemo(),period);if(!user)throw Error('Vui lòng đăng nhập');await ensureMonth(period);const [months,kpis,subtasks,tasks,urgentTasks,notes,timeEntries,payrolls,attendanceEvents,settings]=await Promise.all([getRows('months'),getRows('kpis'),getRows('subtasks'),getRows('tasks'),getRows('urgentTasks'),getRows('notes'),getRows('timeEntries'),getRows('payrolls'),getRows('attendanceEvents'),client.from('flow_v3_settings').select('*').maybeSingle()]);return scoped({months,kpis,subtasks,tasks,urgentTasks,notes,timeEntries,payrolls,attendanceEvents,settings:fromRow(settings.data)||{}},period)},
+  async load(period){if(demo)return scoped(loadDemo(),period);if(!user)throw Error('Vui lòng đăng nhập');await ensureMonth(period);const [months,kpis,subtasks,tasks,urgentTasks,notes,timeEntries,payrolls,attendanceEvents,settings,profile]=await Promise.all([getRows('months'),getRows('kpis'),getRows('subtasks'),getRows('tasks'),getRows('urgentTasks'),getRows('notes'),getRows('timeEntries'),getRows('payrolls'),getRows('attendanceEvents'),client.from('flow_v3_settings').select('*').maybeSingle(),client.from('flow_v3_profiles').select('*').eq('user_id',user.id).single()]);if(profile.error)throw Error(profile.error.message);const ownProfile=fromRow(profile.data);return scoped({months,kpis,subtasks,tasks,urgentTasks,notes,timeEntries,payrolls,attendanceEvents,profile:ownProfile,settings:{...(fromRow(settings.data)||{}),displayName:ownProfile.displayName||fromRow(settings.data)?.displayName||''}},period)},
   async month(period){return ensureMonth(period)},
   async save(name,row){if(demo){const d=loadDemo(),record={...row,id:row.id||uid(name)};const i=d[name].findIndex(x=>x.id===record.id);if(i<0)d[name].push(record);else d[name][i]={...d[name][i],...record};saveDemo(d);return record}const payload=toRow({...row,userId:user.id});if(!row.id)delete payload.id;const {data,error}=await client.from(tableNames[name]).upsert(payload).select().single();if(error)throw Error(error.message);return fromRow(data)},
   async remove(name,id){if(demo){const d=loadDemo();if(name==='kpis'){const subs=d.subtasks.filter(s=>s.kpiId===id),ids=new Set(subs.map(s=>s.id));d.subtasks=d.subtasks.filter(s=>s.kpiId!==id);d.tasks=d.tasks.filter(t=>!ids.has(t.subtaskId));d.urgentTasks.forEach(u=>{if(u.relatedKpiId===id)u.relatedKpiId=null;if(ids.has(u.relatedSubtaskId))u.relatedSubtaskId=null})}if(name==='subtasks'){d.tasks=d.tasks.filter(t=>t.subtaskId!==id);d.urgentTasks.forEach(u=>{if(u.relatedSubtaskId===id)u.relatedSubtaskId=null})}d[name]=d[name].filter(x=>x.id!==id);saveDemo(d);return}const {error}=await client.from(tableNames[name]).delete().eq('id',id);if(error)throw Error(error.message)},
   async completeSubtask(sub,complete){const all=(demo?loadDemo().tasks:(await getRows('tasks'))).filter(t=>t.subtaskId===sub.id);for(const t of all)await this.save('tasks',{...t,completed:complete,completedAt:complete?new Date().toISOString():null});return this.save('subtasks',{...sub,completed:complete,completedAt:complete?new Date().toISOString():null})},
   async clock(action,period,date){const month=await ensureMonth(period);if(demo){const d=loadDemo(),now=new Date().toISOString();let row=d.timeEntries.find(x=>x.date===date);if(action==='checkin'){if(row?.checkInAt)throw Error('Hôm nay đã Check-in');row=row||{id:uid('clock'),monthId:month.id,date,reason:'',note:''};row.checkInAt=now;if(!d.timeEntries.some(x=>x.id===row.id))d.timeEntries.push(row)}else{if(!row?.checkInAt)throw Error('Bạn cần Check-in trước');if(row.checkOutAt)throw Error('Hôm nay đã Check-out');row.checkOutAt=now}saveDemo(d);return row}const {data,error}=await client.rpc('flow_v3_clock',{clock_action:action,work_date:date,work_month_id:month.id});if(error)throw Error(error.message);return fromRow(data)},
+  async adminUsers(){if(demo)return [];return (await invokeAdmin({action:'list'})).users.map(fromRow)},
+  async adminAction(action,payload={}){if(demo)throw Error('Quản lý người dùng không khả dụng trong bản Demo.');return invokeAdmin({action,...payload})},
+  async updatePassword(password){if(demo)throw Error('Bản Demo không có mật khẩu.');if(String(password).length<8)throw Error('Mật khẩu phải có ít nhất 8 ký tự.');const {error}=await client.auth.updateUser({password});if(error)throw Error(error.message);await invokeAdmin({action:'password-changed'});return true},
   async exportAll(){if(demo)return loadDemo();const data={};for(const n of Object.keys(tableNames))data[n]=await getRows(n);const {data:s}=await client.from('flow_v3_settings').select('*').maybeSingle();data.settings=fromRow(s)||{};return data},
   async restore(payload){if(demo){saveDemo(payload.data);return}const data={};for(const n of Object.keys(tableNames))data[snake(n)]=(payload.data[n]||[]).map(toRow);data.settings=toRow(payload.data.settings||{});const normalized={...payload,data};const {error}=await client.rpc('flow_v3_restore_backup',{payload:normalized});if(error)throw Error(error.message)}
 };
