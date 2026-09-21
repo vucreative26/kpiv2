@@ -1,92 +1,49 @@
 import {config} from '../config.js';
-import {clone,currentPeriod,today,uid,weekForDate} from './utils.js';
+import {currentMonth,today,uid} from './utils.js';
 
-const tables={kpis:'flow_v2_kpis',subtasks:'flow_v2_subtasks',tasks:'flow_v2_tasks',links:'flow_v2_resource_links',notes:'flow_v2_daily_notes',events:'flow_v2_events',urgent:'flow_v2_urgent_tasks',salaryRules:'flow_v2_salary_rules',payrolls:'flow_v2_payrolls',payrollItems:'flow_v2_payroll_items'};
+const tableNames={months:'flow_v3_months',kpis:'flow_v3_kpis',subtasks:'flow_v3_subtasks',tasks:'flow_v3_tasks',urgentTasks:'flow_v3_urgent_tasks',payrolls:'flow_v3_payrolls',attendanceEvents:'flow_v3_attendance_events'};
 const camel=s=>s.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
 const snake=s=>s.replace(/[A-Z]/g,c=>'_'+c.toLowerCase());
-const fromRow=row=>Object.fromEntries(Object.entries(row||{}).map(([k,v])=>[camel(k),v]));
-const toRow=row=>Object.fromEntries(Object.entries(row||{}).map(([k,v])=>[snake(k),v]));
-let supabase=null,user=null,demo=false;
+const fromRow=r=>Object.fromEntries(Object.entries(r||{}).map(([k,v])=>[camel(k),v]));
+const toRow=r=>Object.fromEntries(Object.entries(r||{}).map(([k,v])=>[snake(k),v]));
+let client,user,demo=false;
 
-function demoSeed(){
-  const p=currentPeriod(), d=today();
-  const k1={id:'k1',period:p,title:'Đào tạo đại lý',description:'Hoàn thiện chương trình đào tạo trong tháng',category:'Đào tạo',deadline:`${p}-28`,priority:'high',status:'in_progress',resultSummary:''};
-  const k2={id:'k2',period:p,title:'Nghiên cứu sản phẩm mới',description:'Chuẩn hóa kiến thức và tài liệu',category:'R&D',deadline:`${p}-30`,priority:'medium',status:'todo',resultSummary:''};
-  return {profile:{displayName:'Demo',dailyCapacityMinutes:480},kpis:[k1,k2],subtasks:[
-    {id:'s1',kpiId:'k1',title:'Chuẩn bị tài liệu',plannedWeek:1,deadline:`${p}-08`,priority:'high',status:'in_progress'},
-    {id:'s2',kpiId:'k1',title:'Đào tạo online',plannedWeek:2,deadline:`${p}-15`,priority:'medium',status:'todo'},
-    {id:'s3',kpiId:'k1',title:'Upload kho dữ liệu',plannedWeek:null,deadline:null,priority:'low',status:'todo'},
-    {id:'s4',kpiId:'k2',title:'Research thành phần',plannedWeek:1,deadline:null,priority:'medium',status:'in_progress'}
+function seed(){
+  const p=currentMonth(),[year,month]=p.split('-').map(Number),mid='m-demo',d=today();
+  return {months:[{id:mid,year,month}],kpis:[
+    {id:'k-training',monthId:mid,name:'Đào tạo lớp A',note:'Hoàn thiện nội dung và tổ chức lớp',sortOrder:1},
+    {id:'k-web',monthId:mid,name:'Website sản phẩm',note:'Ra mắt landing page phiên bản mới',sortOrder:2}
+  ],subtasks:[
+    {id:'s-docs',kpiId:'k-training',name:'Chuẩn bị tài liệu',weekNumber:1,startDate:`${p}-01`,endDate:`${p}-06`,note:'',completed:false,sortOrder:1},
+    {id:'s-class',kpiId:'k-training',name:'Chuẩn bị lớp học',weekNumber:2,startDate:null,endDate:null,note:'',completed:false,sortOrder:2},
+    {id:'s-landing',kpiId:'k-web',name:'Thiết kế Landing Page',weekNumber:2,startDate:null,endDate:null,note:'',completed:false,sortOrder:1}
   ],tasks:[
-    {id:'t1',subtaskId:'s1',title:'Tìm tài liệu',plannedDate:d,plannedPeriod:'morning',deadline:d,estimatedMinutes:90,priority:'high',status:'done',result:'Đã tổng hợp tài liệu',isHighlight:true},
-    {id:'t2',subtaskId:'s1',title:'Soạn outline',plannedDate:d,plannedPeriod:'afternoon',deadline:null,estimatedMinutes:120,priority:'medium',status:'in_progress',result:'',isHighlight:false},
-    {id:'t3',subtaskId:'s1',title:'Làm slide',plannedDate:null,plannedPeriod:null,deadline:null,estimatedMinutes:180,priority:'high',status:'todo',result:'',isHighlight:false},
-    {id:'t4',subtaskId:'s2',title:'Chuẩn bị Zoom',plannedDate:null,plannedPeriod:null,deadline:null,estimatedMinutes:30,priority:'medium',status:'todo',result:'',isHighlight:false},
-    {id:'t5',subtaskId:'s4',title:'Đọc tài liệu kỹ thuật',plannedDate:null,plannedPeriod:null,deadline:null,estimatedMinutes:150,priority:'medium',status:'todo',result:'',isHighlight:false}
-  ],links:[],notes:[{id:'n1',noteDate:d,content:'Kiểm tra lại slide trước buổi đào tạo.'}],events:[],urgent:[{id:'u1',title:'Chuẩn bị họp đột xuất',dueDate:d,priority:'high',status:'todo',note:'',evidenceUrl:''}],salaryRules:[{id:'r1',title:'Lương cơ bản',ruleType:'base',keyword:'',amount:10000000,active:true},{id:'r2',title:'Lớp online',ruleType:'keyword',keyword:'online',amount:100000,active:true}],payrolls:[],payrollItems:[]};
+    {id:'t-outline',subtaskId:'s-docs',name:'Soạn outline',date:d,startTime:null,endTime:null,note:'',completed:false,sortOrder:1},
+    {id:'t-slide',subtaskId:'s-docs',name:'Chuẩn bị slide',date:d,startTime:'09:00',endTime:'11:00',note:'',completed:true,sortOrder:2},
+    {id:'t-review',subtaskId:'s-docs',name:'Review tài liệu',date:null,startTime:null,endTime:null,note:'',completed:false,sortOrder:3},
+    {id:'t-room',subtaskId:'s-class',name:'Kiểm tra phòng học',date:null,startTime:null,endTime:null,note:'',completed:false,sortOrder:1},
+    {id:'t-wireframe',subtaskId:'s-landing',name:'Chốt wireframe',date:`${p}-22`,startTime:'14:00',endTime:'15:30',note:'',completed:false,sortOrder:1}
+  ],urgentTasks:[{id:'u-demo',monthId:mid,name:'Sửa gấp tài liệu Workshop',date:d,startTime:'14:00',endTime:'15:00',relatedKpiId:null,relatedSubtaskId:null,category:'Khác',note:'',completed:false}],payrolls:[],attendanceEvents:[],settings:{displayName:'Demo'}};
 }
-function loadDemo(){
-  try{return JSON.parse(localStorage.getItem('flow-v2-demo'))||demoSeed();}catch{return demoSeed();}
-}
-function saveDemo(data){localStorage.setItem('flow-v2-demo',JSON.stringify(data));}
-function filterPeriod(data,period){
-  const kpis=data.kpis.filter(k=>k.period===period), kids=new Set(kpis.map(k=>k.id));
-  const subtasks=data.subtasks.filter(s=>kids.has(s.kpiId)), sids=new Set(subtasks.map(s=>s.id));
-  const tasks=data.tasks.filter(t=>sids.has(t.subtaskId));
-  const payrolls=data.payrolls.filter(p=>p.period===period), pids=new Set(payrolls.map(p=>p.id));
-  return {...clone(data),kpis,subtasks,tasks,payrolls,payrollItems:data.payrollItems.filter(i=>pids.has(i.payrollId)),notes:data.notes.filter(n=>String(n.noteDate).slice(0,7)===period),events:data.events.filter(e=>e.startDate<=`${period}-31`&&e.endDate>=`${period}-01`),urgent:data.urgent.filter(u=>u.status!=='done'||String(u.dueDate||'').slice(0,7)===period)};
-}
-async function ensureSupabase(){
-  if(supabase)return;
-  if(!config.supabaseUrl||config.supabaseUrl.includes('YOUR_'))throw Error('Chưa cấu hình Supabase. Bạn có thể dùng chế độ demo.');
-  const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-  supabase=mod.createClient(config.supabaseUrl,config.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true}});
-}
-async function query(table,options={}){
-  let q=supabase.from(tables[table]).select('*');
-  if(options.period&&table==='kpis')q=q.eq('period',options.period);
-  const {data,error}=await q.order('created_at',{ascending:true}); if(error)throw Error(error.message);return (data||[]).map(fromRow);
-}
+const key='flow-kpi-v3-demo';
+const loadDemo=()=>{try{return JSON.parse(localStorage.getItem(key))||seed()}catch{return seed()}};
+const saveDemo=d=>localStorage.setItem(key,JSON.stringify(d));
+const scoped=(all,period)=>{const [year,month]=period.split('-').map(Number),months=all.months.filter(m=>m.year===year&&m.month===month),mids=new Set(months.map(m=>m.id)),kpis=all.kpis.filter(k=>mids.has(k.monthId)),kids=new Set(kpis.map(k=>k.id)),subtasks=all.subtasks.filter(s=>kids.has(s.kpiId)),sids=new Set(subtasks.map(s=>s.id));return {...all,months,kpis,subtasks,tasks:all.tasks.filter(t=>sids.has(t.subtaskId)),urgentTasks:all.urgentTasks.filter(x=>mids.has(x.monthId)),payrolls:all.payrolls.filter(x=>mids.has(x.monthId)),attendanceEvents:all.attendanceEvents.filter(x=>mids.has(x.monthId))}};
+async function ensureClient(){if(client)return;const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');client=mod.createClient(config.supabaseUrl,config.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true}})}
+async function getRows(name){const {data,error}=await client.from(tableNames[name]).select('*');if(error)throw Error(error.message);return data.map(fromRow)}
+async function ensureMonth(period){const [year,month]=period.split('-').map(Number);if(demo){const d=loadDemo();let row=d.months.find(x=>x.year===year&&x.month===month);if(!row){row={id:uid('month'),year,month};d.months.push(row);saveDemo(d)}return row}const {data,error}=await client.from(tableNames.months).upsert({user_id:user.id,year,month},{onConflict:'user_id,year,month'}).select().single();if(error)throw Error(error.message);return fromRow(data)}
+
 export const api={
-  async init(callback){
-    if(config.supabaseUrl?.includes('YOUR_'))return callback(null);
-    await ensureSupabase(); const {data}=await supabase.auth.getSession();user=data.session?.user||null;
-    supabase.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;callback(user);}); callback(user);
-  },
-  async signIn(email,password){await ensureSupabase();const {data,error}=await supabase.auth.signInWithPassword({email,password});if(error)throw Error(error.message);user=data.user;demo=false;return user;},
-  async demoSignIn(){demo=true;user={id:'demo',email:'demo@flow.local'};return user;},
-  async signOut(){if(!demo&&supabase)await supabase.auth.signOut();demo=false;user=null;},
-  isDemo(){return demo;},
-  async load(period){
-    if(demo)return filterPeriod(loadDemo(),period);
-    if(!user)throw Error('Vui lòng đăng nhập.');
-    const [kpis,subtasks,tasks,links,notes,events,urgent,salaryRules,payrolls,payrollItems,profileResult]=await Promise.all([
-      query('kpis',{period}),query('subtasks'),query('tasks'),query('links'),query('notes'),query('events'),query('urgent'),query('salaryRules'),query('payrolls'),query('payrollItems'),supabase.from('flow_v2_profiles').select('*').maybeSingle()
-    ]);
-    return filterPeriod({kpis,subtasks,tasks,links,notes,events,urgent,salaryRules,payrolls,payrollItems,profile:fromRow(profileResult.data)||{dailyCapacityMinutes:480}},period);
-  },
-  async save(table,row){
-    if(demo){const data=loadDemo(),record={...row,id:row.id||uid(table.slice(0,2))};const i=data[table].findIndex(x=>x.id===record.id);if(i>=0)data[table][i]={...data[table][i],...record};else data[table].push(record);saveDemo(data);return record;}
-    const record=toRow({...row,userId:user.id}); if(!row.id)delete record.id;
-    const {data,error}=await supabase.from(tables[table]).upsert(record).select().single();if(error)throw Error(error.message);return fromRow(data);
-  },
-  async remove(table,id){
-    if(demo){const data=loadDemo();data[table]=data[table].filter(x=>x.id!==id);if(table==='kpis'){const sids=data.subtasks.filter(s=>s.kpiId===id).map(s=>s.id);data.subtasks=data.subtasks.filter(s=>s.kpiId!==id);data.tasks=data.tasks.filter(t=>!sids.includes(t.subtaskId));}if(table==='subtasks')data.tasks=data.tasks.filter(t=>t.subtaskId!==id);if(table==='payrolls')data.payrollItems=data.payrollItems.filter(i=>i.payrollId!==id);saveDemo(data);return;}
-    const {error}=await supabase.from(tables[table]).delete().eq('id',id);if(error)throw Error(error.message);
-  },
-  async saveNote(date,content){
-    if(demo){const data=loadDemo(),old=data.notes.find(n=>n.noteDate===date);if(old)old.content=content;else data.notes.push({id:uid('note'),noteDate:date,content});saveDemo(data);return;}
-    const {error}=await supabase.from(tables.notes).upsert({user_id:user.id,note_date:date,content},{onConflict:'user_id,note_date'});if(error)throw Error(error.message);
-  },
-  async replacePayroll(payroll,items){
-    const saved=await this.save('payrolls',payroll);
-    if(demo){const data=loadDemo();data.payrollItems=data.payrollItems.filter(i=>i.payrollId!==saved.id);items.forEach(i=>data.payrollItems.push({...i,id:uid('pi'),payrollId:saved.id}));saveDemo(data);return saved;}
-    const del=await supabase.from(tables.payrollItems).delete().eq('payroll_id',saved.id);if(del.error)throw Error(del.error.message);
-    if(items.length){const ins=await supabase.from(tables.payrollItems).insert(items.map(i=>toRow({...i,payrollId:saved.id,userId:user.id})));if(ins.error)throw Error(ins.error.message);}
-    return saved;
-  },
-  async allForYear(year){
-    if(demo){const d=loadDemo();return {...clone(d),kpis:d.kpis.filter(k=>k.period.startsWith(year)),payrolls:d.payrolls.filter(p=>p.period.startsWith(year))};}
-    const data={};for(const key of Object.keys(tables))data[key]=await query(key);data.kpis=data.kpis.filter(k=>k.period.startsWith(year));data.payrolls=data.payrolls.filter(p=>p.period.startsWith(year));return data;
-  }
+  async init(cb){await ensureClient();const {data}=await client.auth.getSession();user=data.session?.user||null;client.auth.onAuthStateChange((_e,s)=>{user=s?.user||null;cb(user)});cb(user)},
+  async signIn(email,password){await ensureClient();const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw Error(error.message);user=data.user;demo=false;return user},
+  async demoSignIn(){demo=true;user={id:'demo'};return user},
+  async signOut(){if(!demo&&client)await client.auth.signOut();demo=false;user=null},
+  isDemo:()=>demo,
+  async load(period){if(demo)return scoped(loadDemo(),period);if(!user)throw Error('Vui lòng đăng nhập');await ensureMonth(period);const [months,kpis,subtasks,tasks,urgentTasks,payrolls,attendanceEvents,settings]=await Promise.all([getRows('months'),getRows('kpis'),getRows('subtasks'),getRows('tasks'),getRows('urgentTasks'),getRows('payrolls'),getRows('attendanceEvents'),client.from('flow_v3_settings').select('*').maybeSingle()]);return scoped({months,kpis,subtasks,tasks,urgentTasks,payrolls,attendanceEvents,settings:fromRow(settings.data)||{}},period)},
+  async month(period){return ensureMonth(period)},
+  async save(name,row){if(demo){const d=loadDemo(),record={...row,id:row.id||uid(name)};const i=d[name].findIndex(x=>x.id===record.id);if(i<0)d[name].push(record);else d[name][i]={...d[name][i],...record};saveDemo(d);return record}const payload=toRow({...row,userId:user.id});if(!row.id)delete payload.id;const {data,error}=await client.from(tableNames[name]).upsert(payload).select().single();if(error)throw Error(error.message);return fromRow(data)},
+  async remove(name,id){if(demo){const d=loadDemo();if(name==='kpis'){const subs=d.subtasks.filter(s=>s.kpiId===id),ids=new Set(subs.map(s=>s.id));d.subtasks=d.subtasks.filter(s=>s.kpiId!==id);d.tasks=d.tasks.filter(t=>!ids.has(t.subtaskId));d.urgentTasks.forEach(u=>{if(u.relatedKpiId===id)u.relatedKpiId=null;if(ids.has(u.relatedSubtaskId))u.relatedSubtaskId=null})}if(name==='subtasks'){d.tasks=d.tasks.filter(t=>t.subtaskId!==id);d.urgentTasks.forEach(u=>{if(u.relatedSubtaskId===id)u.relatedSubtaskId=null})}d[name]=d[name].filter(x=>x.id!==id);saveDemo(d);return}const {error}=await client.from(tableNames[name]).delete().eq('id',id);if(error)throw Error(error.message)},
+  async completeSubtask(sub,complete){const all=(demo?loadDemo().tasks:(await getRows('tasks'))).filter(t=>t.subtaskId===sub.id);for(const t of all)await this.save('tasks',{...t,completed:complete,completedAt:complete?new Date().toISOString():null});return this.save('subtasks',{...sub,completed:complete,completedAt:complete?new Date().toISOString():null})},
+  async exportAll(){if(demo)return loadDemo();const data={};for(const n of Object.keys(tableNames))data[n]=await getRows(n);const {data:s}=await client.from('flow_v3_settings').select('*').maybeSingle();data.settings=fromRow(s)||{};return data},
+  async restore(payload){if(demo){saveDemo(payload.data);return}const data={};for(const n of Object.keys(tableNames))data[snake(n)]=(payload.data[n]||[]).map(toRow);data.settings=toRow(payload.data.settings||{});const normalized={...payload,data};const {error}=await client.rpc('flow_v3_restore_backup',{payload:normalized});if(error)throw Error(error.message)}
 };
