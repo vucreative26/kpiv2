@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f6f8fc">
   <title>Flow KPI V3</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/icons/Logo.svg?v=20260921-logo8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260921-status7">
+  <link rel="stylesheet" href="./styles.css?v=20260921-notes9">
 </head>
 <body>
   <section id="auth" class="auth-shell">
     <form id="loginForm" class="auth-card">
-      <div class="brand-mark">F</div>
+      <div class="brand-mark"><img src="./assets/icons/Logo.svg" alt="Flow KPI"></div>
       <div><h1>Flow KPI</h1><p>Biến mục tiêu thành kế hoạch rõ ràng.</p></div>
       <label>Email<input id="email" type="email" autocomplete="username" required></label>
       <label>Mật khẩu<input id="password" type="password" autocomplete="current-password" required></label>
@@ -25,11 +26,12 @@
 
   <div id="app" class="app-shell" hidden>
     <aside class="sidebar">
-      <div class="brand"><div class="brand-mark">F</div><div><b>Flow KPI</b><small>Personal workspace</small></div></div>
+      <div class="brand"><div class="brand-mark"><img src="./assets/icons/Logo.svg" alt=""></div><div><b>Flow KPI</b><small>Personal workspace</small></div></div>
       <nav id="mainNav">
         <button data-view="dashboard" title="Dashboard"><span class="nav-icon" style="--icon: url('./assets/icons/dashboard.svg')"></span><span class="nav-label">Dashboard</span></button>
         <button data-view="kpi" title="KPI"><span class="nav-icon" style="--icon: url('./assets/icons/kpi.svg')"></span><span class="nav-label">KPI</span></button>
         <button data-view="planning" title="Kế hoạch"><span class="nav-icon" style="--icon: url('./assets/icons/planning.svg')"></span><span class="nav-label">Kế hoạch</span></button>
+        <button data-view="notes" title="Ghi chú"><span class="nav-icon" style="--icon: url('./assets/icons/notes.svg')"></span><span class="nav-label">Ghi chú</span></button>
         <button data-view="payroll" title="Lương & Chấm công"><span class="nav-icon" style="--icon: url('./assets/icons/payroll.svg')"></span><span class="nav-label">Lương & Chấm công</span></button>
         <button data-view="reports" title="Báo cáo"><span class="nav-icon" style="--icon: url('./assets/icons/reports.svg')"></span><span class="nav-label">Báo cáo</span></button>
       </nav>
@@ -54,6 +56,6 @@
 
   <div id="overlay" class="overlay" hidden></div>
   <div id="toast" class="toast-stack" aria-live="polite"></div>
-  <script type="module" src="./src/app.js?v=20260921-status7"></script>
+  <script type="module" src="./src/app.js?v=20260921-notes9"></script>
 </body>
 </html>
