@@ -1,4 +1,4 @@
-import {config} from '../config.js?v=20260921-users12';
+import {config} from '../config.js?v=20260921-users13';
 import {currentMonth,today,uid} from './utils.js?v=20260921-users12';
 
 const tableNames={months:'flow_v3_months',kpis:'flow_v3_kpis',subtasks:'flow_v3_subtasks',tasks:'flow_v3_tasks',urgentTasks:'flow_v3_urgent_tasks',notes:'flow_v3_notes',timeEntries:'flow_v3_time_entries',payrolls:'flow_v3_payrolls',attendanceEvents:'flow_v3_attendance_events'};
@@ -36,7 +36,7 @@ async function getRows(name){const {data,error}=await client.from(tableNames[nam
 async function ensureMonth(period){const [year,month]=period.split('-').map(Number);if(demo){const d=loadDemo();let row=d.months.find(x=>x.year===year&&x.month===month);if(!row){row={id:uid('month'),year,month};d.months.push(row);saveDemo(d)}return row}const {data,error}=await client.from(tableNames.months).upsert({user_id:user.id,year,month},{onConflict:'user_id,year,month'}).select().single();if(error)throw Error(error.message);return fromRow(data)}
 
 export const api={
-  async init(cb){await ensureClient();const {data}=await client.auth.getSession();user=data.session?.user||null;client.auth.onAuthStateChange((_e,s)=>{user=s?.user||null;cb(user)});cb(user)},
+  async init(cb){await ensureClient();const {data}=await client.auth.getSession();user=data.session?.user||null;client.auth.onAuthStateChange((event,s)=>{user=s?.user||null;cb(user,event)});cb(user,'INITIAL_SESSION')},
   async signIn(login,password){await ensureClient();const {data,error}=await client.auth.signInWithPassword({email:loginEmail(login),password});if(error)throw Error(error.message);user=data.user;demo=false;return user},
   async demoSignIn(){demo=true;user={id:'demo'};return user},
   async signOut(){if(!demo&&client)await client.auth.signOut();demo=false;user=null},

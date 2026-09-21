@@ -1,4 +1,4 @@
-import {api} from './api.js?v=20260921-users12';
+import {api} from './api.js?v=20260921-users13';
 import {getState,setState,setData} from './state.js?v=20260921-users12';
 import {today,currentMonth,esc,money,fmtDate,shortDate,weekday,norm,monthDays,monthWeeks,timeRange,subProgress,kpiProgress,portfolioProgress,kpiIsHealthy,pct,download} from './utils.js?v=20260921-users12';
 
@@ -67,7 +67,7 @@ document.addEventListener('input',e=>{if(e.target.id==='kpiSearch'){S().filters.
 $('#overlay').addEventListener('click',e=>{if(e.target===$('#overlay'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 $('#period').onchange=async e=>{setState({period:e.target.value,anchorDate:`${e.target.value}-01`});await refresh()};function shift(n){const [y,m]=S().period.split('-').map(Number),x=new Date(y,m-1+n,1);setState({period:`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`,anchorDate:null});refresh()}$('#prevMonth').onclick=()=>shift(-1);$('#nextMonth').onclick=()=>shift(1);$('#menuButton').onclick=()=>document.body.classList.toggle('nav-open');document.addEventListener('click',e=>{if(document.body.classList.contains('nav-open')&&!e.target.closest('.sidebar')&&!e.target.closest('#menuButton')){document.body.classList.remove('nav-open')}});$('#logoutButton').onclick=async()=>{await api.signOut();$('#app').hidden=true;$('#auth').hidden=false;document.body.classList.remove('nav-open');window.scrollTo(0,0)};
 $('#loginForm').onsubmit=async e=>{e.preventDefault();try{await enter(await run(()=>api.signIn($('#email').value,$('#password').value)))}catch(x){$('#authMessage').textContent=x.message}};$('#demoLogin').onclick=async()=>enter(await api.demoSignIn());async function enter(user){setState({user,demo:api.isDemo(),period:currentMonth()});$('#auth').hidden=true;$('#app').hidden=false;document.body.classList.remove('nav-open');window.scrollTo(0,0);await refresh();const q=new URLSearchParams(location.search);if(q.get('view'))route(q.get('view'),{openSub:q.get('subtaskId')});if(!S().demo&&S().data.profile?.mustChangePassword)setTimeout(()=>changePasswordForm(true),100)}
-api.init(user=>{if(user&&!S().user)enter(user)}).catch(e=>$('#authMessage').textContent=e.message);
+api.init((user,event)=>{if(event==='PASSWORD_RECOVERY'&&user){if(!S().user)enter(user).then(()=>changePasswordForm(true));else changePasswordForm(true);return}if(user&&!S().user)enter(user)}).catch(e=>$('#authMessage').textContent=e.message);
 setInterval(()=>{const el=$('#clockNow');if(el)el.textContent=clockParts(new Date())},30000);
 
 function dashboardTaskWeighted(){
