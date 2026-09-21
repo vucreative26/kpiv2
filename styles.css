@@ -30,3 +30,6 @@ body{background:var(--bg);letter-spacing:-.01em}h1,h2{letter-spacing:-.035em}.au
 /* A hidden screen must never participate in layout. This keeps Auth and App
    as two distinct screens even though each has its own display mode. */
 [hidden]{display:none!important}
+
+/* Modern product typography and KPI health state. */
+:root{font-family:'Montserrat',system-ui,sans-serif}.brand b,.topbar h1,.hero h2,.metric-grid b{font-family:'Montserrat',system-ui,sans-serif}.brand b,.topbar h1{font-weight:600}.hero h2{font-weight:500}.metric-grid b{font-weight:600}.kpi-card.healthy{border-color:#9fbeaf}.kpi-card.healthy .ring,.kpi-progress.healthy strong{color:var(--green)}.kpi-progress.healthy .progress i,.kpi-card.healthy .progress i{background:linear-gradient(90deg,#287d63,#54a187)}
