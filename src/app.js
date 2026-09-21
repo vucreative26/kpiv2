@@ -1,6 +1,6 @@
-import {api} from './api.js';
-import {getState,setState,setData} from './state.js';
-import {today,currentMonth,esc,money,fmtDate,shortDate,weekday,norm,monthDays,monthWeeks,timeRange,subProgress,kpiProgress,pct,download} from './utils.js';
+import {api} from './api.js?v=20260921-progress2';
+import {getState,setState,setData} from './state.js?v=20260921-progress2';
+import {today,currentMonth,esc,money,fmtDate,shortDate,weekday,norm,monthDays,monthWeeks,timeRange,subProgress,kpiProgress,portfolioProgress,kpiIsHealthy,pct,download} from './utils.js?v=20260921-progress2';
 
 const $=s=>document.querySelector(s), S=()=>getState();
 const titles={dashboard:'Dashboard',kpi:'KPI',planning:'Kế hoạch',payroll:'Lương & Chấm công',reports:'Báo cáo',backup:'Xuất dữ liệu',settings:'Cài đặt'};
@@ -19,7 +19,7 @@ const ctx=()=>{const subs=new Map(S().data.subtasks.map(x=>[x.id,x])),kpis=new M
 function monthId(){return S().data.months[0]?.id}
 function route(view,params={}){setState({view,...params});const q=new URLSearchParams({view,...(params.openSub?{subtaskId:params.openSub}:{})});history.replaceState(null,'',`?${q}`);render();if(params.openSub)setTimeout(()=>openSubtask(params.openSub),0)}
 
-function render(){const s=S();$('#pageTitle').textContent=titles[s.view];$('#period').value=s.period;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===s.view));({dashboard:dashboard,kpi:kpiView,planning:planning,payroll:payroll,reports:reports,backup:backup,settings:settings}[s.view]||dashboard)()}
+function render(){const s=S();$('#pageTitle').textContent=titles[s.view];$('#period').value=s.period;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===s.view));({dashboard:dashboardTaskWeighted,kpi:kpiTaskWeighted,planning:planning,payroll:payrollWithItems,reports:reportsTaskWeighted,backup:backup,settings:settings}[s.view]||dashboardTaskWeighted)()}
 function taskCheck(t){return `<button class="check ${t.completed?'done':''}" data-toggle-task="${t.id}" aria-label="Đổi trạng thái">${t.completed?'✓':''}</button>`}
 function dashboard(){const d=S().data,done=d.tasks.filter(x=>x.completed).length,urgentDone=d.urgentTasks.filter(x=>x.completed).length,week=monthWeeks(S().period).find(w=>w.days.includes(today())),weekTasks=d.tasks.filter(t=>week&&t.date>=week.start&&t.date<=week.end),over=d.tasks.filter(t=>!t.completed&&t.date&&t.date<today()),uns=d.tasks.filter(t=>!t.date),todayTasks=d.tasks.filter(t=>t.date===today()).sort((a,b)=>(a.startTime||'99').localeCompare(b.startTime||'99'));$('#content').innerHTML=`<div class="hero"><div><span>THÁNG ${S().period.slice(5)}/${S().period.slice(0,4)}</span><h2>${d.settings.displayName?`Chào ${esc(d.settings.displayName)}, `:''}mọi việc đang đi đúng hướng.</h2></div><b>${d.tasks.length?pct({done,total:d.tasks.length}):0}%<small>tiến độ tháng</small></b></div><div class="metric-grid"><article><span>KPI</span><b>${d.kpis.length}</b><small>${d.kpis.filter(k=>pct(kpiProgress(k,d.subtasks,d.tasks))===100).length} hoàn thành</small></article><article><span>Sub-task</span><b>${d.subtasks.length}</b><small>${d.subtasks.filter(s=>pct(subProgress(s,d.tasks))===100).length} hoàn thành</small></article><article><span>Task</span><b>${d.tasks.length}</b><small>${done} hoàn thành</small></article><article class="urgent"><span>Việc gấp</span><b>${d.urgentTasks.length}</b><small>${urgentDone} hoàn thành</small></article></div><div class="dash-grid"><section class="panel"><div class="section-title"><h3>Tiến độ KPI</h3><button data-go="kpi">Xem tất cả</button></div>${d.kpis.map(k=>{const p=kpiProgress(k,d.subtasks,d.tasks);return `<button class="kpi-progress" data-open-kpi="${k.id}"><span><b>${esc(k.name)}</b><small>${p.done}/${p.total} Sub-task</small></span>${progress(p)}<strong>${pct(p)}%</strong></button>`}).join('')||empty('Chưa có KPI.')}</section><section class="panel"><div class="section-title"><h3>Tuần này</h3><span>${weekTasks.length} Task</span></div><div class="big-stat">${weekTasks.filter(t=>t.completed).length}<small>đã hoàn thành</small></div><div class="big-stat red">${d.urgentTasks.filter(u=>week&&u.date>=week.start&&u.date<=week.end).length}<small>việc gấp</small></div></section><section class="panel"><div class="section-title"><h3>Cần chú ý</h3></div><button class="attention" data-plan-filter="overdue"><b>${over.length}</b><span>Task quá hạn</span></button><button class="attention" data-plan-filter="unscheduled"><b>${uns.length}</b><span>Task chưa có lịch</span></button></section><section class="panel"><div class="section-title"><h3>Lịch hôm nay</h3><button data-today>Hôm nay</button></div>${todayTasks.map(t=>`<div class="agenda-row"><time>${t.startTime?.slice(0,5)||'—'}</time>${taskCheck(t)}<button data-edit-task="${t.id}"><b>${esc(t.name)}</b><small>${esc(ctx().forTask(t).sub?.name||'')}</small></button></div>`).join('')||empty('Hôm nay chưa có Task.')}</section></div>`}
 
@@ -54,3 +54,64 @@ $('#overlay').addEventListener('click',e=>{if(e.target===$('#overlay'))closeModa
 $('#period').onchange=async e=>{setState({period:e.target.value,anchorDate:`${e.target.value}-01`});await refresh()};function shift(n){const [y,m]=S().period.split('-').map(Number),x=new Date(y,m-1+n,1);setState({period:`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`,anchorDate:null});refresh()}$('#prevMonth').onclick=()=>shift(-1);$('#nextMonth').onclick=()=>shift(1);$('#menuButton').onclick=()=>document.body.classList.toggle('nav-open');$('#logoutButton').onclick=async()=>{await api.signOut();$('#app').hidden=true;$('#auth').hidden=false;document.body.classList.remove('nav-open');window.scrollTo(0,0)};
 $('#loginForm').onsubmit=async e=>{e.preventDefault();try{await enter(await run(()=>api.signIn($('#email').value,$('#password').value)))}catch(x){$('#authMessage').textContent=x.message}};$('#demoLogin').onclick=async()=>enter(await api.demoSignIn());async function enter(user){setState({user,demo:api.isDemo(),period:currentMonth()});$('#auth').hidden=true;$('#app').hidden=false;document.body.classList.remove('nav-open');window.scrollTo(0,0);await refresh();const q=new URLSearchParams(location.search);if(q.get('view'))route(q.get('view'),{openSub:q.get('subtaskId')})}
 api.init(user=>{if(user&&!S().user)enter(user)}).catch(e=>$('#authMessage').textContent=e.message);
+
+function dashboardTaskWeighted(){
+  dashboard();
+  const d=S().data,monthly=portfolioProgress(d.kpis,d.subtasks,d.tasks);
+  const hero=$('.hero > b');
+  if(hero)hero.innerHTML=`${pct(monthly)}%<small>tiến độ tháng theo công việc</small>`;
+  const kpiMetric=$('.metric-grid article:first-child small');
+  if(kpiMetric)kpiMetric.textContent=`${d.kpis.filter(k=>kpiIsHealthy(k,d.subtasks,d.tasks)).length} KPI đạt từ 85%`;
+  document.querySelectorAll('.kpi-progress').forEach(row=>{
+    const k=d.kpis.find(x=>x.id===row.dataset.openKpi),p=k&&kpiProgress(k,d.subtasks,d.tasks),meta=row.querySelector('small');
+    if(meta&&p)meta.textContent=`${p.done}/${p.total} công việc${pct(p)>=85?' · Đạt':''}`;
+    row.classList.toggle('healthy',!!p&&pct(p)>=85);
+  });
+}
+
+function kpiTaskWeighted(){
+  kpiView();
+  const d=S().data;
+  document.querySelectorAll('.kpi-card').forEach(card=>{
+    const k=d.kpis.find(x=>x.id===card.dataset.kpi),p=k&&kpiProgress(k,d.subtasks,d.tasks),label=card.querySelector('.kpi-main p');
+    if(label&&p){const subCount=d.subtasks.filter(s=>s.kpiId===k.id).length;label.textContent=`${subCount} Sub-task · ${p.done}/${p.total} công việc${pct(p)>=85?' · Đạt':''}`;}
+    card.classList.toggle('healthy',!!p&&pct(p)>=85);
+  });
+}
+
+function reportsTaskWeighted(){
+  reports();
+  const d=S().data,metric=$('.metric-grid article:first-child small');
+  if(metric)metric.textContent=`${d.kpis.filter(k=>kpiIsHealthy(k,d.subtasks,d.tasks)).length} KPI đạt từ 85%`;
+}
+
+function payrollWithItems(){
+  payroll();
+  const p=S().data.payrolls[0],box=$('.salary-lines');
+  if(!p||!box)return;
+  const items=Array.isArray(p.adjustmentItems)?p.adjustmentItems:[];
+  if(items.length){
+    const details=document.createElement('div');
+    details.className='salary-item-details';
+    details.innerHTML=`<small>CHI TIẾT KHOẢN KHÁC</small>${items.map(item=>`<span class="${item.type==='penalty'?'penalty':'income'}"><i>${item.type==='penalty'?'−':'+'}</i>${esc(item.title)}<b>${money(item.amount)}</b></span>`).join('')}`;
+    box.querySelector('strong')?.before(details);
+  }
+}
+
+function payrollItemsForm(){
+  const p=S().data.payrolls[0]||{};
+  const initial=Array.isArray(p.adjustmentItems)&&p.adjustmentItems.length?p.adjustmentItems:(Number(p.otherAdjustment)?[{type:Number(p.otherAdjustment)<0?'penalty':'income',title:'Khoản khác',amount:Math.abs(Number(p.otherAdjustment))}]:[]);
+  const row=item=>`<div class="pay-item-row" data-pay-item><select data-item-type><option value="income" ${item.type!=='penalty'?'selected':''}>Thu nhập</option><option value="penalty" ${item.type==='penalty'?'selected':''}>Khoản phạt</option></select><input data-item-title value="${esc(item.title||'')}" placeholder="Tên khoản"><input data-item-amount type="number" min="0" step="1000" value="${Math.abs(Number(item.amount)||0)}" placeholder="Số tiền"><button type="button" data-remove-item aria-label="Xóa">×</button></div>`;
+  modal(p.id?'Chỉnh sửa bảng lương':'Tạo bảng lương',`<div class="payroll-editor"><div class="form-grid">${input('baseSalary','Lương cơ bản',p.baseSalary||0,'number','step=1000')}${input('kpiBonus','KPI bonus',p.kpiBonus||0,'number','step=1000')}${input('attendanceAdjustment','Điều chỉnh chấm công',p.attendanceAdjustment||0,'number','step=1000')}${area('note','Ghi chú',p.note)}</div><section class="pay-items-section"><div class="section-title"><div><h3>CÁC KHOẢN KHÁC</h3><p>Thêm từng khoản thu nhập hoặc khoản phạt.</p></div><strong id="itemsTotal">${money(p.otherAdjustment||0)}</strong></div><div id="payItemsList">${initial.map(row).join('')}</div><div class="item-add-actions"><button type="button" class="btn ghost" id="addIncome">+ Thu nhập</button><button type="button" class="btn penalty-btn" id="addPenalty">+ Khoản phạt</button></div></section></div>`,async(v,form)=>{
+    const items=[...form.querySelectorAll('[data-pay-item]')].map(el=>({type:el.querySelector('[data-item-type]').value,title:el.querySelector('[data-item-title]').value.trim(),amount:Math.abs(Number(el.querySelector('[data-item-amount]').value)||0)})).filter(x=>x.title&&x.amount);
+    const otherAdjustment=items.reduce((sum,x)=>sum+(x.type==='penalty'?-x.amount:x.amount),0),m=await api.month(S().period);
+    await run(()=>api.save('payrolls',{...p,monthId:p.monthId||m.id,baseSalary:Number(v.baseSalary)||0,kpiBonus:Number(v.kpiBonus)||0,otherAdjustment,adjustmentItems:items,attendanceAdjustment:Number(v.attendanceAdjustment)||0,note:v.note||''}),'Đã lưu bảng lương');
+    await refresh();return true;
+  },{wide:true});
+  const list=$('#payItemsList'),total=()=>{const sum=[...list.querySelectorAll('[data-pay-item]')].reduce((n,el)=>n+(el.querySelector('[data-item-type]').value==='penalty'?-1:1)*(Number(el.querySelector('[data-item-amount]').value)||0),0);$('#itemsTotal').textContent=money(sum)};
+  const add=type=>{list.insertAdjacentHTML('beforeend',row({type,title:'',amount:0}));list.lastElementChild.querySelector('[data-item-title]').focus();total()};
+  $('#addIncome').onclick=()=>add('income');$('#addPenalty').onclick=()=>add('penalty');list.addEventListener('click',e=>{if(e.target.closest('[data-remove-item]')){e.target.closest('[data-pay-item]').remove();total()}});list.addEventListener('input',total);list.addEventListener('change',total);
+}
+
+// Capture this action before the legacy fixed-field form handler.
+document.addEventListener('click',e=>{if(!e.target.closest('[data-edit-payroll]'))return;e.preventDefault();e.stopImmediatePropagation();payrollItemsForm()},{capture:true});

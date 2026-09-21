@@ -1,5 +1,5 @@
-import {config} from '../config.js';
-import {currentMonth,today,uid} from './utils.js';
+import {config} from '../config.js?v=20260921-progress2';
+import {currentMonth,today,uid} from './utils.js?v=20260921-progress2';
 
 const tableNames={months:'flow_v3_months',kpis:'flow_v3_kpis',subtasks:'flow_v3_subtasks',tasks:'flow_v3_tasks',urgentTasks:'flow_v3_urgent_tasks',payrolls:'flow_v3_payrolls',attendanceEvents:'flow_v3_attendance_events'};
 const camel=s=>s.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
