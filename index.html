@@ -9,14 +9,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260921-clock10">
+  <link rel="stylesheet" href="./styles.css?v=20260921-users12">
 </head>
 <body>
   <section id="auth" class="auth-shell">
     <form id="loginForm" class="auth-card">
       <div class="brand-mark"><img src="./assets/icons/Logo.svg" alt="Flow KPI"></div>
       <div><h1>Flow KPI</h1><p>Biến mục tiêu thành kế hoạch rõ ràng.</p></div>
-      <label>Email<input id="email" type="email" autocomplete="username" required></label>
+      <label>Tên đăng nhập hoặc email<input id="email" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Ví dụ: hoanhvu" required></label>
       <label>Mật khẩu<input id="password" type="password" autocomplete="current-password" required></label>
       <button class="btn primary wide">Đăng nhập</button>
       <button id="demoLogin" class="btn ghost wide" type="button">Xem bản demo</button>
@@ -37,6 +37,7 @@
         <button data-view="reports" title="Báo cáo"><span class="nav-icon" style="--icon: url('./assets/icons/reports.svg')"></span><span class="nav-label">Báo cáo</span></button>
       </nav>
       <div class="side-secondary">
+        <button id="adminUsersNav" data-view="users" title="Quản lý người dùng" hidden><span class="nav-icon" style="--icon: url('./assets/icons/users.svg')"></span><span class="nav-label">Quản lý người dùng</span></button>
         <button data-view="backup" title="Xuất dữ liệu"><span class="nav-icon" style="--icon: url('./assets/icons/backup.svg')"></span><span class="nav-label">Xuất dữ liệu</span></button>
         <button data-view="settings" title="Cài đặt"><span class="nav-icon" style="--icon: url('./assets/icons/settings.svg')"></span><span class="nav-label">Cài đặt</span></button>
       </div>
@@ -57,6 +58,6 @@
 
   <div id="overlay" class="overlay" hidden></div>
   <div id="toast" class="toast-stack" aria-live="polite"></div>
-  <script type="module" src="./src/app.js?v=20260921-clock10"></script>
+  <script type="module" src="./src/app.js?v=20260921-users12"></script>
 </body>
 </html>
