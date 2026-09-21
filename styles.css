@@ -1,6 +1,6 @@
 /* ==========================================================================
    FLOW KPI V3 - MODERN SAAS DESIGN SYSTEM
-   Clean, elegant, responsive for Desktop & Mobile
+   Desktop Icon Rail (Hover Expand) & Mobile Dark Bottom Bar
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -50,11 +50,11 @@
   --amber-border: #fde68a;
   --amber-text: #92400e;
 
-  /* Sidebar Theme (Midnight Slate) */
+  /* Sidebar & Bottom Bar Theme (Midnight Slate / Dark Navy) */
   --side-bg: #0f172a;
   --side-panel: #1e293b;
   --side-hover: #1e293b;
-  --side-active: rgba(37, 99, 235, 0.2);
+  --side-active: rgba(37, 99, 235, 0.22);
   --side-active-text: #60a5fa;
   --side-text: #94a3b8;
   --side-border: #1e293b;
@@ -139,6 +139,40 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .busy button {
   pointer-events: none;
   opacity: 0.7;
+}
+
+/* --------------------------------------------------------------------------
+   SVG ICON SYSTEM (Mask-based, inherits color)
+   -------------------------------------------------------------------------- */
+.nav-icon, .svg-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) no-repeat center / contain;
+  mask: var(--icon) no-repeat center / contain;
+  flex-shrink: 0;
+  vertical-align: middle;
+  transition: transform var(--transition);
+}
+
+.feature-icon.svg-icon {
+  width: 34px;
+  height: 34px;
+  background-color: var(--primary);
+}
+
+.empty-icon {
+  width: 38px;
+  height: 38px;
+  background-color: var(--subtle);
+  margin-bottom: 6px;
+}
+
+.check-icon {
+  width: 13px;
+  height: 13px;
+  background-color: #ffffff;
 }
 
 /* --------------------------------------------------------------------------
@@ -234,54 +268,78 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 
 /* --------------------------------------------------------------------------
-   4. APP SHELL & LAYOUT
+   4. APP SHELL & DESKTOP ICON RAIL
    -------------------------------------------------------------------------- */
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr); /* Cột sidebar 72px trên desktop */
   background: var(--bg);
 }
 
 /* --------------------------------------------------------------------------
-   5. SIDEBAR NAVIGATION (Desktop & Drawer Mobile)
+   5. SIDEBAR: DESKTOP ICON RAIL (HOVER SHOWS LABELS)
    -------------------------------------------------------------------------- */
 .sidebar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  bottom: 0;
+  left: 0;
+  width: 72px; /* Thu gọn thanh icon trên desktop */
   height: 100vh;
   background: var(--side-bg);
   border-right: 1px solid var(--side-border);
-  padding: 24px 16px 20px;
+  padding: 20px 12px;
   display: flex;
   flex-direction: column;
-  z-index: 40;
+  z-index: 50;
+  overflow: hidden;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.12);
+  transition: width 0.28s var(--ease), box-shadow 0.28s;
+}
+
+/* Khi rê chuột vào: mở rộng êm ái ra 250px và nổi nhẹ */
+.sidebar:hover, .sidebar:focus-within {
+  width: 250px;
+  box-shadow: 16px 0 45px rgba(0, 0, 0, 0.35);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 6px 26px;
+  gap: 13px;
+  padding: 0 4px 26px;
+  white-space: nowrap;
 }
 
 .brand-mark {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, var(--primary), #4f46e5);
   color: #ffffff;
   font-weight: 800;
-  font-size: 18px;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px var(--primary-glow);
+  font-size: 20px;
+  flex: 0 0 44px;
+  box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .brand div:last-child {
   display: grid;
   line-height: 1.25;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.sidebar:hover .brand div:last-child, .sidebar:focus-within .brand div:last-child {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
 .brand b {
@@ -304,31 +362,38 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 .sidebar nav button, .side-secondary button, .sidebar footer button {
   width: 100%;
-  height: 44px;
-  padding: 0 14px;
+  height: 46px;
+  padding: 0 13px;
   border-radius: var(--radius-sm);
   color: var(--side-text);
   text-align: left;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   font-size: 13.5px;
   font-weight: 600;
   white-space: nowrap;
-  transition: all var(--transition);
+  overflow: hidden;
+  transition: background var(--transition), color var(--transition);
 }
 
 .nav-icon {
-  font-size: 18px;
   width: 22px;
-  text-align: center;
-  line-height: 1;
-  color: inherit;
-  flex-shrink: 0;
+  height: 22px;
+  flex: 0 0 22px;
 }
 
 .nav-label {
-  flex: 1;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+  white-space: nowrap;
+}
+
+/* Hover sidebar show label */
+.sidebar:hover .nav-label, .sidebar:focus-within .nav-label {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .sidebar nav button:hover, .side-secondary button:hover {
@@ -361,17 +426,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   color: #fca5a5;
 }
 
-.sidebar footer button::before {
-  content: '↪';
-  font-size: 17px;
-  width: 22px;
-  text-align: center;
-}
-
 /* --------------------------------------------------------------------------
    6. WORKSPACE & TOPBAR
    -------------------------------------------------------------------------- */
 .workspace {
+  grid-column: 2;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -438,14 +497,17 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   place-items: center;
   border-radius: var(--radius-xs);
   color: var(--ink-secondary);
-  font-size: 18px;
-  font-weight: 600;
-  transition: background var(--transition);
+  transition: background var(--transition), color var(--transition);
 }
 
 .month-switch button:hover {
   background: var(--panel-muted);
   color: var(--ink);
+}
+
+.month-switch button .svg-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .month-switch input {
@@ -533,9 +595,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   background: #ffffff;
   border-radius: 50%;
   padding: 0;
-  color: transparent;
-  font-size: 12px;
-  font-weight: 800;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1052,13 +1111,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   padding: 34px 20px;
 }
 
-.empty > span {
-  font-size: 32px;
-  display: block;
-  margin-bottom: 4px;
-  color: var(--subtle);
-}
-
 .empty p {
   margin: 6px 0 16px;
   font-size: 13.5px;
@@ -1303,7 +1355,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 /* --------------------------------------------------------------------------
    11. CALENDAR GRIDS (Month, Week, 3-Day, Custom Range)
    -------------------------------------------------------------------------- */
-/* Month Calendar */
 .month-calendar {
   width: 100%;
 }
@@ -1731,7 +1782,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   font-size: 12px;
 }
 
-/* Day Agenda Modal (Khi click ô ngày) */
+/* Day Agenda Modal */
 .day-agenda-head {
   display: flex;
   gap: 10px;
@@ -2099,12 +2150,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   font-weight: 500;
 }
 
-.feature-icon {
-  font-size: 32px;
-  color: var(--primary);
-  display: inline-block;
-}
-
 .file {
   display: block;
   border: 2px dashed var(--line-strong);
@@ -2251,11 +2296,15 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   border-radius: 50%;
   width: 32px;
   height: 32px;
-  font-size: 20px;
   color: var(--muted);
   display: grid;
   place-items: center;
   transition: all var(--transition);
+}
+
+.modal header button .svg-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .modal header button:hover {
@@ -2493,9 +2542,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     border-radius: var(--radius-sm);
     border: 1px solid var(--line);
     background: #ffffff;
-    font-size: 20px;
     color: var(--ink);
     box-shadow: var(--shadow-xs);
+  }
+
+  .menu .svg-icon {
+    width: 20px;
+    height: 20px;
   }
 
   .topbar {
@@ -2507,23 +2560,22 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     padding: 22px 20px 40px;
   }
 
-  /* Sidebar chuyển thành Bottom Navigation Bar mặc định trên Mobile */
+  /* SIDEBAR CHUYỂN THÀNH BOTTOM NAVIGATION BAR TRÊN MOBILE - MÀU ĐEN XANH ĐỒNG BỘ */
   .sidebar {
     position: fixed;
     inset: auto 0 0 0;
-    width: 100%;
+    width: 100% !important;
     height: 64px;
     padding: 6px 8px;
     padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
     display: block;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    background: #0f172a !important; /* MÀU ĐEN XANH ĐỒNG BỘ DESKTOP */
     border-right: none;
-    border-top: 1px solid var(--line);
-    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+    border-top: 1px solid #1e293b;
+    box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.35);
     z-index: 40;
     overflow: visible;
+    transition: none;
   }
 
   .sidebar .brand, .sidebar .side-secondary, .sidebar footer {
@@ -2544,22 +2596,26 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     border-radius: var(--radius-sm);
     text-align: center;
-    color: var(--muted);
+    color: #94a3b8; /* Chữ xám sáng trên nền tối */
     background: transparent;
   }
 
   .sidebar nav button .nav-icon {
     font-size: 20px;
-    width: auto;
-    line-height: 1;
+    width: 20px;
+    height: 20px;
+    color: inherit;
   }
 
   .sidebar nav button .nav-label {
+    opacity: 1 !important;
+    transform: none !important;
     font-size: 10.5px;
     font-weight: 600;
+    color: inherit;
     max-width: 68px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2567,8 +2623,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   }
 
   .sidebar nav button.active {
-    background: var(--primary-light);
-    color: var(--primary);
+    background: rgba(37, 99, 235, 0.25);
+    color: #60a5fa; /* Xanh sáng nổi bật */
+  }
+
+  .sidebar nav button:hover {
+    background: #1e293b;
+    color: #ffffff;
   }
 
   /* DRAWER KHI BẤM NÚT MENU (☰) TRÊN TOPBAR: body.nav-open */
@@ -2576,7 +2637,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     content: '';
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(15, 23, 42, 0.65);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 48;
@@ -2588,14 +2649,14 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     top: 0;
     bottom: 0;
     left: 0;
-    width: 280px;
+    width: 280px !important;
     height: 100vh;
     padding: 24px 18px 20px;
     display: flex;
     flex-direction: column;
-    background: var(--side-bg);
-    border-right: 1px solid var(--side-border);
-    box-shadow: 14px 0 35px rgba(0, 0, 0, 0.35);
+    background: #0f172a !important;
+    border-right: 1px solid #1e293b;
+    box-shadow: 14px 0 40px rgba(0, 0, 0, 0.5);
     z-index: 50;
     animation: drawerSlide 0.25s var(--ease);
   }
@@ -2609,6 +2670,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   body.nav-open .sidebar .side-secondary,
   body.nav-open .sidebar footer {
     display: block;
+  }
+
+  body.nav-open .sidebar .brand div:last-child {
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto;
   }
 
   body.nav-open .sidebar nav {
@@ -2629,11 +2696,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   }
 
   body.nav-open .sidebar nav button .nav-icon {
-    font-size: 18px;
-    width: 22px;
+    width: 20px;
+    height: 20px;
   }
 
   body.nav-open .sidebar nav button .nav-label {
+    opacity: 1 !important;
+    transform: none !important;
     font-size: 13.5px;
     max-width: none;
   }
@@ -2838,7 +2907,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     font-size: 11.5px;
   }
 
-  /* Month Calendar Mobile - Hiển thị 7 cột thông minh, chạm ngày xem chi tiết */
+  /* Month Calendar Mobile */
   .calendar-wrap {
     overflow: hidden;
   }
@@ -2892,7 +2961,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     border-radius: 4px;
   }
 
-  /* Ẩn các text dài trên ô lịch mobile, người dùng chạm vào ô để mở Day Agenda */
   .day-cell .cal-group, .day-cell .cal-urgent {
     display: none;
   }
@@ -2936,7 +3004,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .month-switch button {
     width: 28px;
     height: 28px;
-    font-size: 16px;
+  }
+
+  .month-switch button .svg-icon {
+    width: 14px;
+    height: 14px;
   }
 
   .content {

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260921-v3ui">
+  <link rel="stylesheet" href="./styles.css?v=20260921-icons1">
 </head>
 <body>
   <section id="auth" class="auth-shell">
@@ -27,23 +27,23 @@
     <aside class="sidebar">
       <div class="brand"><div class="brand-mark">F</div><div><b>Flow KPI</b><small>Personal workspace</small></div></div>
       <nav id="mainNav">
-        <button data-view="dashboard" title="Dashboard"><span class="nav-icon">⌂</span><span class="nav-label">Dashboard</span></button>
-        <button data-view="kpi" title="KPI"><span class="nav-icon">◎</span><span class="nav-label">KPI</span></button>
-        <button data-view="planning" title="Kế hoạch"><span class="nav-icon">▦</span><span class="nav-label">Kế hoạch</span></button>
-        <button data-view="payroll" title="Lương & Chấm công"><span class="nav-icon">₫</span><span class="nav-label">Lương & Chấm công</span></button>
-        <button data-view="reports" title="Báo cáo"><span class="nav-icon">≡</span><span class="nav-label">Báo cáo</span></button>
+        <button data-view="dashboard" title="Dashboard"><span class="nav-icon" style="--icon: url('./assets/icons/dashboard.svg')"></span><span class="nav-label">Dashboard</span></button>
+        <button data-view="kpi" title="KPI"><span class="nav-icon" style="--icon: url('./assets/icons/kpi.svg')"></span><span class="nav-label">KPI</span></button>
+        <button data-view="planning" title="Kế hoạch"><span class="nav-icon" style="--icon: url('./assets/icons/planning.svg')"></span><span class="nav-label">Kế hoạch</span></button>
+        <button data-view="payroll" title="Lương & Chấm công"><span class="nav-icon" style="--icon: url('./assets/icons/payroll.svg')"></span><span class="nav-label">Lương & Chấm công</span></button>
+        <button data-view="reports" title="Báo cáo"><span class="nav-icon" style="--icon: url('./assets/icons/reports.svg')"></span><span class="nav-label">Báo cáo</span></button>
       </nav>
       <div class="side-secondary">
-        <button data-view="backup" title="Xuất dữ liệu"><span class="nav-icon">⇩</span><span class="nav-label">Xuất dữ liệu</span></button>
-        <button data-view="settings" title="Cài đặt"><span class="nav-icon">⚙</span><span class="nav-label">Cài đặt</span></button>
+        <button data-view="backup" title="Xuất dữ liệu"><span class="nav-icon" style="--icon: url('./assets/icons/backup.svg')"></span><span class="nav-label">Xuất dữ liệu</span></button>
+        <button data-view="settings" title="Cài đặt"><span class="nav-icon" style="--icon: url('./assets/icons/settings.svg')"></span><span class="nav-label">Cài đặt</span></button>
       </div>
-      <footer><button id="logoutButton">Đăng xuất</button></footer>
+      <footer><button id="logoutButton"><span class="nav-icon" style="--icon: url('./assets/icons/logout.svg')"></span><span class="nav-label">Đăng xuất</span></button></footer>
     </aside>
     <main class="workspace">
       <header class="topbar">
-        <button id="menuButton" class="icon-btn menu" aria-label="Mở menu">☰</button>
+        <button id="menuButton" class="icon-btn menu" aria-label="Mở menu"><span class="svg-icon" style="--icon: url('./assets/icons/menu.svg')"></span></button>
         <div><p id="eyebrow">FLOW KPI</p><h1 id="pageTitle">Dashboard</h1></div>
-        <div class="month-switch"><button id="prevMonth" aria-label="Tháng trước">‹</button><input id="period" type="month"><button id="nextMonth" aria-label="Tháng sau">›</button></div>
+        <div class="month-switch"><button id="prevMonth" aria-label="Tháng trước"><span class="svg-icon" style="--icon: url('./assets/icons/chevron-left.svg')"></span></button><input id="period" type="month"><button id="nextMonth" aria-label="Tháng sau"><span class="svg-icon" style="--icon: url('./assets/icons/chevron-right.svg')"></span></button></div>
       </header>
       <section id="content" class="content" aria-live="polite"></section>
     </main>
