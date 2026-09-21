@@ -11,6 +11,17 @@ export const monthDays=p=>{const [y,m]=p.split('-').map(Number),n=new Date(y,m,0
 export function monthWeeks(p){const days=monthDays(p),out=[];let i=0,n=1,size=8-(new Date(`${days[0]}T12:00:00`).getDay()||7);while(i<days.length){const slice=days.slice(i,i+size);out.push({number:n++,start:slice[0],end:slice.at(-1),days:slice});i+=size;size=7;}return out;}
 export const timeRange=x=>!x.date?'Chưa có lịch':!x.startTime?`${fmtDate(x.date)} · Chưa có giờ`:`${fmtDate(x.date)} · ${x.startTime.slice(0,5)} → ${(x.endTime||'').slice(0,5)||'—'}`;
 export function subProgress(sub,tasks){const rows=tasks.filter(t=>t.subtaskId===sub.id);return rows.length?{done:rows.filter(t=>t.completed).length,total:rows.length}:{done:sub.completed?1:0,total:1};}
-export function kpiProgress(kpi,subs,tasks){const rows=subs.filter(s=>s.kpiId===kpi.id);return {done:rows.filter(s=>subProgress(s,tasks).done===subProgress(s,tasks).total).length,total:rows.length};}
+export function kpiProgress(kpi,subs,tasks){
+  const rows=subs.filter(s=>s.kpiId===kpi.id);
+  return rows.reduce((sum,sub)=>{
+    const children=tasks.filter(t=>t.subtaskId===sub.id);
+    return children.length
+      ? {done:sum.done+children.filter(t=>t.completed).length,total:sum.total+children.length}
+      : {done:sum.done+(sub.completed?1:0),total:sum.total+1};
+  },{done:0,total:0});
+}
+export function portfolioProgress(kpis,subs,tasks){return kpis.reduce((sum,kpi)=>{const p=kpiProgress(kpi,subs,tasks);return {done:sum.done+p.done,total:sum.total+p.total}},{done:0,total:0});}
+export const KPI_OK_PERCENT=85;
+export const kpiIsHealthy=(kpi,subs,tasks)=>pct(kpiProgress(kpi,subs,tasks))>=KPI_OK_PERCENT;
 export const pct=p=>p.total?Math.round(p.done/p.total*100):0;
 export const download=(text,name,type='application/json')=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
