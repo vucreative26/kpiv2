@@ -156,3 +156,15 @@ document.addEventListener('dragstart',e=>{const task=e.target.closest('[data-dra
 document.addEventListener('dragover',e=>{const day=e.target.closest('[data-drop-day]');if(!day)return;e.preventDefault();day.classList.add('drop-target');e.dataTransfer.dropEffect='move'});
 document.addEventListener('dragleave',e=>e.target.closest('[data-drop-day]')?.classList.remove('drop-target'));
 document.addEventListener('drop',async e=>{const day=e.target.closest('[data-drop-day]');if(!day)return;e.preventDefault();day.classList.remove('drop-target');const [type,id]=e.dataTransfer.getData('text/plain').split(':');if(type==='task'){const task=S().data.tasks.find(x=>x.id===id);if(task)await run(()=>api.save('tasks',{...task,date:day.dataset.dropDay}),'Đã xếp Task vào '+fmtDate(day.dataset.dropDay))}if(type==='sub'){const sub=S().data.subtasks.find(x=>x.id===id);if(sub)await run(()=>api.save('subtasks',{...sub,startDate:day.dataset.dropDay,endDate:day.dataset.dropDay}),'Đã xếp Sub-task vào '+fmtDate(day.dataset.dropDay))}await refresh()});
+
+const urgentFab=$('#floatingUrgent');
+let fabDrag=null,fabMoved=false;
+function clampFab(left,top){const rect=urgentFab.getBoundingClientRect(),gap=8;return {left:Math.max(gap,Math.min(left,window.innerWidth-rect.width-gap)),top:Math.max(gap,Math.min(top,window.innerHeight-rect.height-gap))}}
+function placeFab(left,top,save=false){const p=clampFab(left,top);urgentFab.style.left=`${p.left}px`;urgentFab.style.top=`${p.top}px`;urgentFab.style.right='auto';urgentFab.style.bottom='auto';if(save)localStorage.setItem('flow-v3-urgent-fab',JSON.stringify(p))}
+try{const saved=JSON.parse(localStorage.getItem('flow-v3-urgent-fab'));if(Number.isFinite(saved?.left)&&Number.isFinite(saved?.top))placeFab(saved.left,saved.top)}catch{}
+urgentFab.addEventListener('pointerdown',e=>{const r=urgentFab.getBoundingClientRect();fabDrag={pointerId:e.pointerId,dx:e.clientX-r.left,dy:e.clientY-r.top,startX:e.clientX,startY:e.clientY};fabMoved=false;urgentFab.setPointerCapture(e.pointerId);urgentFab.classList.add('dragging');e.preventDefault()});
+urgentFab.addEventListener('pointermove',e=>{if(!fabDrag||e.pointerId!==fabDrag.pointerId)return;if(Math.hypot(e.clientX-fabDrag.startX,e.clientY-fabDrag.startY)>5)fabMoved=true;placeFab(e.clientX-fabDrag.dx,e.clientY-fabDrag.dy)});
+urgentFab.addEventListener('pointerup',e=>{if(!fabDrag||e.pointerId!==fabDrag.pointerId)return;urgentFab.releasePointerCapture?.(e.pointerId);urgentFab.classList.remove('dragging');const r=urgentFab.getBoundingClientRect();placeFab(r.left,r.top,true);fabDrag=null;if(!fabMoved)urgentForm()});
+urgentFab.addEventListener('pointercancel',()=>{fabDrag=null;urgentFab.classList.remove('dragging')});
+urgentFab.addEventListener('click',e=>e.preventDefault());
+window.addEventListener('resize',()=>{if(urgentFab.style.left){const r=urgentFab.getBoundingClientRect();placeFab(r.left,r.top)}});
