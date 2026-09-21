@@ -720,7 +720,18 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 
 .metric-grid .urgent {
-  border-top: 3px solid var(--red);
+  border: 0;
+  background: var(--red);
+  color: #ffffff;
+}
+
+.metric-grid .urgent span,
+.metric-grid .urgent b {
+  color: #ffffff;
+}
+
+.metric-grid .urgent small {
+  color: rgba(255, 255, 255, 0.82);
 }
 
 /* Dashboard Panels */
@@ -1509,21 +1520,31 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .cal-group {
   background: #eff6ff;
   color: #1d4ed8;
-  border-left: 3px solid var(--primary);
 }
 
 .cal-group:hover {
   background: #dbeafe;
 }
 
+.cal-group.completed,
+.cal-group.completed:hover {
+  background: #eef0f3;
+  color: #7b8491;
+}
+
 .cal-urgent {
   background: var(--red-light);
   color: var(--red);
-  border-left: 3px solid var(--red);
 }
 
 .cal-urgent:hover {
   background: #fee2e2;
+}
+
+.cal-urgent.completed,
+.cal-urgent.completed:hover {
+  background: #eef0f3;
+  color: #7b8491;
 }
 
 /* Week Calendar */
@@ -1590,9 +1611,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 .mini-task {
   width: 100%;
-  border: 1px solid var(--line);
-  background: #ffffff;
-  border-left: 3px solid var(--primary);
+  border: 0;
+  background: #eff6ff;
   border-radius: var(--radius-xs);
   padding: 8px 9px;
   text-align: left;
@@ -1625,12 +1645,18 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 
 .mini-task.complete {
-  opacity: 0.55;
-  background: #f8fafc;
+  opacity: 1;
+  background: #eef0f3;
+  color: #7b8491;
+}
+
+.mini-task.complete time,
+.mini-task.complete b,
+.mini-task.complete small {
+  color: #7b8491;
 }
 
 .mini-task.urgent {
-  border-left-color: var(--red);
   background: var(--red-light);
 }
 
