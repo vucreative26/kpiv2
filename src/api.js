@@ -1,7 +1,7 @@
-import {config} from '../config.js?v=20260921-sidebar6';
-import {currentMonth,today,uid} from './utils.js?v=20260921-sidebar6';
+import {config} from '../config.js?v=20260921-notes9';
+import {currentMonth,today,uid} from './utils.js?v=20260921-notes9';
 
-const tableNames={months:'flow_v3_months',kpis:'flow_v3_kpis',subtasks:'flow_v3_subtasks',tasks:'flow_v3_tasks',urgentTasks:'flow_v3_urgent_tasks',payrolls:'flow_v3_payrolls',attendanceEvents:'flow_v3_attendance_events'};
+const tableNames={months:'flow_v3_months',kpis:'flow_v3_kpis',subtasks:'flow_v3_subtasks',tasks:'flow_v3_tasks',urgentTasks:'flow_v3_urgent_tasks',notes:'flow_v3_notes',payrolls:'flow_v3_payrolls',attendanceEvents:'flow_v3_attendance_events'};
 const camel=s=>s.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
 const snake=s=>s.replace(/[A-Z]/g,c=>'_'+c.toLowerCase());
 const fromRow=r=>Object.fromEntries(Object.entries(r||{}).map(([k,v])=>[camel(k),v]));
@@ -23,12 +23,12 @@ function seed(){
     {id:'t-review',subtaskId:'s-docs',name:'Review tài liệu',date:null,startTime:null,endTime:null,note:'',completed:false,sortOrder:3},
     {id:'t-room',subtaskId:'s-class',name:'Kiểm tra phòng học',date:null,startTime:null,endTime:null,note:'',completed:false,sortOrder:1},
     {id:'t-wireframe',subtaskId:'s-landing',name:'Chốt wireframe',date:`${p}-22`,startTime:'14:00',endTime:'15:30',note:'',completed:false,sortOrder:1}
-  ],urgentTasks:[{id:'u-demo',monthId:mid,name:'Sửa gấp tài liệu Workshop',date:d,startTime:'14:00',endTime:'15:00',relatedKpiId:null,relatedSubtaskId:null,category:'Khác',note:'',completed:false}],payrolls:[],attendanceEvents:[],settings:{displayName:'Demo'}};
+  ],urgentTasks:[{id:'u-demo',monthId:mid,name:'Sửa gấp tài liệu Workshop',date:d,startTime:'14:00',endTime:'15:00',relatedKpiId:null,relatedSubtaskId:null,category:'Khác',note:'',completed:false}],notes:[{id:'n-demo',monthId:mid,title:'Ý tưởng cho tháng này',body:'Tổng hợp lại các đầu việc quan trọng trước khi đưa vào KPI.',color:'blue',pinned:true,createdAt:new Date().toISOString()}],payrolls:[],attendanceEvents:[],settings:{displayName:'Demo'}};
 }
 const key='flow-kpi-v3-demo';
-const loadDemo=()=>{try{return JSON.parse(localStorage.getItem(key))||seed()}catch{return seed()}};
+const loadDemo=()=>{try{const stored=JSON.parse(localStorage.getItem(key));return stored?{...seed(),...stored,notes:stored.notes||[]}:seed()}catch{return seed()}};
 const saveDemo=d=>localStorage.setItem(key,JSON.stringify(d));
-const scoped=(all,period)=>{const [year,month]=period.split('-').map(Number),months=all.months.filter(m=>m.year===year&&m.month===month),mids=new Set(months.map(m=>m.id)),kpis=all.kpis.filter(k=>mids.has(k.monthId)),kids=new Set(kpis.map(k=>k.id)),subtasks=all.subtasks.filter(s=>kids.has(s.kpiId)),sids=new Set(subtasks.map(s=>s.id));return {...all,months,kpis,subtasks,tasks:all.tasks.filter(t=>sids.has(t.subtaskId)),urgentTasks:all.urgentTasks.filter(x=>mids.has(x.monthId)),payrolls:all.payrolls.filter(x=>mids.has(x.monthId)),attendanceEvents:all.attendanceEvents.filter(x=>mids.has(x.monthId))}};
+const scoped=(all,period)=>{const [year,month]=period.split('-').map(Number),months=all.months.filter(m=>m.year===year&&m.month===month),mids=new Set(months.map(m=>m.id)),kpis=all.kpis.filter(k=>mids.has(k.monthId)),kids=new Set(kpis.map(k=>k.id)),subtasks=all.subtasks.filter(s=>kids.has(s.kpiId)),sids=new Set(subtasks.map(s=>s.id));return {...all,months,kpis,subtasks,tasks:all.tasks.filter(t=>sids.has(t.subtaskId)),urgentTasks:all.urgentTasks.filter(x=>mids.has(x.monthId)),notes:(all.notes||[]).filter(x=>mids.has(x.monthId)),payrolls:all.payrolls.filter(x=>mids.has(x.monthId)),attendanceEvents:all.attendanceEvents.filter(x=>mids.has(x.monthId))}};
 async function ensureClient(){if(client)return;const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');client=mod.createClient(config.supabaseUrl,config.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true}})}
 async function getRows(name){const {data,error}=await client.from(tableNames[name]).select('*');if(error)throw Error(error.message);return data.map(fromRow)}
 async function ensureMonth(period){const [year,month]=period.split('-').map(Number);if(demo){const d=loadDemo();let row=d.months.find(x=>x.year===year&&x.month===month);if(!row){row={id:uid('month'),year,month};d.months.push(row);saveDemo(d)}return row}const {data,error}=await client.from(tableNames.months).upsert({user_id:user.id,year,month},{onConflict:'user_id,year,month'}).select().single();if(error)throw Error(error.message);return fromRow(data)}
@@ -39,7 +39,7 @@ export const api={
   async demoSignIn(){demo=true;user={id:'demo'};return user},
   async signOut(){if(!demo&&client)await client.auth.signOut();demo=false;user=null},
   isDemo:()=>demo,
-  async load(period){if(demo)return scoped(loadDemo(),period);if(!user)throw Error('Vui lòng đăng nhập');await ensureMonth(period);const [months,kpis,subtasks,tasks,urgentTasks,payrolls,attendanceEvents,settings]=await Promise.all([getRows('months'),getRows('kpis'),getRows('subtasks'),getRows('tasks'),getRows('urgentTasks'),getRows('payrolls'),getRows('attendanceEvents'),client.from('flow_v3_settings').select('*').maybeSingle()]);return scoped({months,kpis,subtasks,tasks,urgentTasks,payrolls,attendanceEvents,settings:fromRow(settings.data)||{}},period)},
+  async load(period){if(demo)return scoped(loadDemo(),period);if(!user)throw Error('Vui lòng đăng nhập');await ensureMonth(period);const [months,kpis,subtasks,tasks,urgentTasks,notes,payrolls,attendanceEvents,settings]=await Promise.all([getRows('months'),getRows('kpis'),getRows('subtasks'),getRows('tasks'),getRows('urgentTasks'),getRows('notes'),getRows('payrolls'),getRows('attendanceEvents'),client.from('flow_v3_settings').select('*').maybeSingle()]);return scoped({months,kpis,subtasks,tasks,urgentTasks,notes,payrolls,attendanceEvents,settings:fromRow(settings.data)||{}},period)},
   async month(period){return ensureMonth(period)},
   async save(name,row){if(demo){const d=loadDemo(),record={...row,id:row.id||uid(name)};const i=d[name].findIndex(x=>x.id===record.id);if(i<0)d[name].push(record);else d[name][i]={...d[name][i],...record};saveDemo(d);return record}const payload=toRow({...row,userId:user.id});if(!row.id)delete payload.id;const {data,error}=await client.from(tableNames[name]).upsert(payload).select().single();if(error)throw Error(error.message);return fromRow(data)},
   async remove(name,id){if(demo){const d=loadDemo();if(name==='kpis'){const subs=d.subtasks.filter(s=>s.kpiId===id),ids=new Set(subs.map(s=>s.id));d.subtasks=d.subtasks.filter(s=>s.kpiId!==id);d.tasks=d.tasks.filter(t=>!ids.has(t.subtaskId));d.urgentTasks.forEach(u=>{if(u.relatedKpiId===id)u.relatedKpiId=null;if(ids.has(u.relatedSubtaskId))u.relatedSubtaskId=null})}if(name==='subtasks'){d.tasks=d.tasks.filter(t=>t.subtaskId!==id);d.urgentTasks.forEach(u=>{if(u.relatedSubtaskId===id)u.relatedSubtaskId=null})}d[name]=d[name].filter(x=>x.id!==id);saveDemo(d);return}const {error}=await client.from(tableNames[name]).delete().eq('id',id);if(error)throw Error(error.message)},
