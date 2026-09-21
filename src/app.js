@@ -1,6 +1,6 @@
-import {api} from './api.js?v=20260921-antigravity2';
-import {getState,setState,setData} from './state.js?v=20260921-antigravity2';
-import {today,currentMonth,esc,money,fmtDate,shortDate,weekday,norm,monthDays,monthWeeks,timeRange,subProgress,kpiProgress,portfolioProgress,kpiIsHealthy,pct,download} from './utils.js?v=20260921-antigravity2';
+import {api} from './api.js?v=20260921-sidebar6';
+import {getState,setState,setData} from './state.js?v=20260921-sidebar6';
+import {today,currentMonth,esc,money,fmtDate,shortDate,weekday,norm,monthDays,monthWeeks,timeRange,subProgress,kpiProgress,portfolioProgress,kpiIsHealthy,pct,download} from './utils.js?v=20260921-sidebar6';
 
 const $=s=>document.querySelector(s), S=()=>getState();
 const titles={dashboard:'Dashboard',kpi:'KPI',planning:'Kế hoạch',payroll:'Lương & Chấm công',reports:'Báo cáo',backup:'Xuất dữ liệu',settings:'Cài đặt'};
@@ -120,12 +120,28 @@ function planningEnhanced(){
   const s=S(),d=s.data,weeks=monthWeeks(s.period),activeWeek=weeks.find(w=>w.days.includes(s.anchorDate||today()))||weeks[0];
   const toolbar=$('.plan-toolbar');
   toolbar.innerHTML=`<div class="view-controls"><button data-plan-view="month" class="${s.calendarView==='month'?'active':''}">Tháng</button><label class="view-select ${s.calendarView==='week'?'active':''}"><span>Tuần</span><select id="planWeek">${weeks.map(w=>`<option value="${w.number}" ${w.number===activeWeek.number?'selected':''}>Tuần ${w.number} · ${shortDate(w.start)}–${shortDate(w.end)}</option>`).join('')}</select></label><label class="view-select ${s.calendarView==='3day'?'active':''}"><span>3 ngày quanh</span><input id="planThreeDay" type="date" value="${s.anchorDate||today()}"></label><button data-plan-view="custom" class="${s.calendarView==='custom'?'active':''}">Tùy chọn</button></div><div class="plan-actions"><button class="btn ghost" data-today>Hôm nay</button><button class="btn ghost" data-add-urgent>+ Việc gấp</button><button class="btn primary" data-calendar-task>+ Task</button></div>`;
-  const mode=s.planningSidebar||'unscheduled',allTasks=d.tasks,visibleTasks=mode==='unscheduled'?allTasks.filter(t=>!t.date):allTasks;
-  const emptySubs=d.subtasks.filter(sub=>!allTasks.some(t=>t.subtaskId===sub.id));
-  const {subs,kpis}=ctx(),side=$('.plan-side');
-  side.innerHTML=`<div class="planner-side-head"><h3>Công việc</h3><p>Kéo một việc vào ngày trên lịch để xếp lịch.</p></div><div class="side-tabs"><button data-planning-side="all" class="${mode==='all'?'active':''}">Tất cả <span>${allTasks.length+emptySubs.length}</span></button><button data-planning-side="unscheduled" class="${mode==='unscheduled'?'active':''}">Chưa xếp ngày <span>${allTasks.filter(t=>!t.date).length+emptySubs.length}</span></button></div><div class="flat-work-list">${visibleTasks.map(t=>{const sub=subs.get(t.subtaskId),kpi=kpis.get(sub?.kpiId);return `<article class="draggable-work ${t.completed?'complete':''}" draggable="true" data-drag-task="${t.id}"><div><b>${esc(t.name)}</b><small>${esc(sub?.name||'')} · ${esc(kpi?.name||'')}</small><em>${t.date?fmtDate(t.date):'Chưa có ngày'}${t.startTime?' · '+t.startTime.slice(0,5):''}</em></div><button data-edit-task="${t.id}" title="Sửa">•••</button></article>`}).join('')}${emptySubs.map(sub=>{const kpi=kpis.get(sub.kpiId);return `<article class="draggable-work empty-sub" draggable="true" data-drag-sub="${sub.id}"><div><b>${esc(sub.name)}</b><small>Sub-task chưa có Task · ${esc(kpi?.name||'')}</small><em>${sub.startDate?fmtDate(sub.startDate):'Chưa có ngày'}</em></div><button data-open-sub="${sub.id}">Mở</button></article>`}).join('')||empty(mode==='unscheduled'?'Tất cả công việc đã được xếp ngày.':'Chưa có công việc.')}</div>`;
+  const side=$('.plan-side');side.innerHTML=planningSidebarHtml(d,s);
   if(s.calendarView==='custom')$('.calendar-wrap').innerHTML=customRangeCalendar();
   document.querySelectorAll('.day-cell:not(.muted)').forEach(cell=>{const day=cell.querySelector('[data-day-add]')?.dataset.dayAdd;if(day){cell.dataset.openDay=day;cell.dataset.dropDay=day;cell.title='Click để xem công việc · Kéo Task vào để xếp lịch'}});
+}
+
+function planningSidebarHtml(d,s){
+  const mode=s.planningSidebar||'unscheduled',allTasks=d.tasks,emptySubs=d.subtasks.filter(sub=>!allTasks.some(t=>t.subtaskId===sub.id));
+  const totalAll=allTasks.length+emptySubs.length,totalUnscheduled=allTasks.filter(t=>!t.date).length+emptySubs.filter(sub=>!sub.startDate).length;
+  const tabs=`<div class="side-tabs"><button data-planning-side="all" class="${mode==='all'?'active':''}">Tất cả <span>${totalAll}</span></button><button data-planning-side="unscheduled" class="${mode==='unscheduled'?'active':''}">Chưa xếp ngày <span>${totalUnscheduled}</span></button></div>`;
+  const relevantTasks=subId=>allTasks.filter(t=>t.subtaskId===subId&&(mode==='all'||!t.date));
+  const subRelevant=sub=>relevantTasks(sub.id).length>0||(!allTasks.some(t=>t.subtaskId===sub.id)&&(mode==='all'||!sub.startDate));
+  const direction=s.planningSlide==='back'?'slide-back':'slide-forward';
+  if(s.planningSubtaskId){
+    const sub=d.subtasks.find(x=>x.id===s.planningSubtaskId),kpi=d.kpis.find(x=>x.id===sub?.kpiId),tasks=sub?relevantTasks(sub.id):[];
+    return `<div class="planner-side-head hierarchy-head"><button data-plan-back="subtasks" aria-label="Quay lại">‹</button><div><small>${esc(kpi?.name||'KPI')}</small><h3>${esc(sub?.name||'Sub-task')}</h3><p>Kéo Task vào ngày trên lịch.</p></div></div>${tabs}<div class="flat-work-list hierarchy-panel ${direction}">${tasks.map(t=>`<article class="draggable-work ${t.completed?'complete':''}" draggable="true" data-drag-task="${t.id}"><div><b>${esc(t.name)}</b><small>${esc(sub?.name||'')} · ${esc(kpi?.name||'')}</small><em>${t.date?fmtDate(t.date):'Chưa có ngày'}${t.startTime?' · '+t.startTime.slice(0,5):''}</em></div><button data-edit-task="${t.id}" title="Sửa">•••</button></article>`).join('')||empty(mode==='unscheduled'?'Sub-task này không còn Task chưa xếp ngày.':'Sub-task này chưa có Task.')}</div>`;
+  }
+  if(s.planningKpiId){
+    const kpi=d.kpis.find(x=>x.id===s.planningKpiId),subs=d.subtasks.filter(sub=>sub.kpiId===s.planningKpiId&&subRelevant(sub));
+    return `<div class="planner-side-head hierarchy-head"><button data-plan-back="kpis" aria-label="Quay lại">‹</button><div><small>KPI</small><h3>${esc(kpi?.name||'')}</h3><p>Chọn Sub-task để xem Task bên trong.</p></div></div>${tabs}<div class="flat-work-list hierarchy-panel ${direction}">${subs.map(sub=>{const all=d.tasks.filter(t=>t.subtaskId===sub.id),shown=relevantTasks(sub.id),isEmpty=!all.length;return `<article class="hierarchy-item sub-item ${isEmpty?'empty-sub':''}" ${isEmpty?'draggable="true" data-drag-sub="'+sub.id+'"':''}><button data-plan-sub="${sub.id}"><span><b>${esc(sub.name)}</b><small>${isEmpty?'Chưa có Task':`${shown.length}/${all.length} Task ${mode==='unscheduled'?'chưa xếp ngày':''}`}</small></span><i>›</i></button>${isEmpty?`<em>${sub.startDate?fmtDate(sub.startDate):'Có thể kéo vào lịch'}</em>`:''}</article>`}).join('')||empty(mode==='unscheduled'?'KPI này không còn công việc chưa xếp ngày.':'KPI này chưa có Sub-task.')}</div>`;
+  }
+  const kpis=d.kpis.filter(kpi=>d.subtasks.some(sub=>sub.kpiId===kpi.id&&subRelevant(sub))||mode==='all');
+  return `<div class="planner-side-head"><h3>Công việc</h3><p>Chọn KPI để xem cấu trúc công việc.</p></div>${tabs}<div class="flat-work-list hierarchy-panel ${direction}">${kpis.map(kpi=>{const subs=d.subtasks.filter(sub=>sub.kpiId===kpi.id),taskIds=new Set(subs.map(x=>x.id)),tasks=allTasks.filter(t=>taskIds.has(t.subtaskId)),pending=tasks.filter(t=>!t.date).length+subs.filter(sub=>!tasks.some(t=>t.subtaskId===sub.id)&&!sub.startDate).length;return `<article class="hierarchy-item kpi-item"><button data-plan-kpi="${kpi.id}"><span><b>${esc(kpi.name)}</b><small>${subs.length} Sub-task · ${tasks.length} Task${pending?` · ${pending} chưa xếp`:''}</small></span><i>›</i></button></article>`}).join('')||empty(mode==='unscheduled'?'Tất cả công việc đã được xếp ngày.':'Chưa có KPI.')}</div>`;
 }
 
 function customRangeCalendar(){
@@ -141,7 +157,10 @@ function openDayAgenda(day){
 
 document.addEventListener('click',e=>{
   const view=e.target.closest('[data-plan-view]');if(view){e.preventDefault();e.stopImmediatePropagation();setState({calendarView:view.dataset.planView});planningEnhanced();return}
-  const side=e.target.closest('[data-planning-side]');if(side){e.preventDefault();e.stopImmediatePropagation();setState({planningSidebar:side.dataset.planningSide});planningEnhanced();return}
+  const side=e.target.closest('[data-planning-side]');if(side){e.preventDefault();e.stopImmediatePropagation();setState({planningSidebar:side.dataset.planningSide,planningSlide:'forward'});planningEnhanced();return}
+  const kpi=e.target.closest('[data-plan-kpi]');if(kpi){e.preventDefault();e.stopImmediatePropagation();setState({planningKpiId:kpi.dataset.planKpi,planningSubtaskId:null,planningSlide:'forward'});planningEnhanced();return}
+  const sub=e.target.closest('[data-plan-sub]');if(sub){e.preventDefault();e.stopImmediatePropagation();setState({planningSubtaskId:sub.dataset.planSub,planningSlide:'forward'});planningEnhanced();return}
+  const back=e.target.closest('[data-plan-back]');if(back){e.preventDefault();e.stopImmediatePropagation();if(back.dataset.planBack==='subtasks')setState({planningSubtaskId:null,planningSlide:'back'});else setState({planningKpiId:null,planningSubtaskId:null,planningSlide:'back'});planningEnhanced();return}
   const day=e.target.closest('[data-open-day]');if(day&&!e.target.closest('button')){e.preventDefault();openDayAgenda(day.dataset.openDay);return}
   const addTask=e.target.closest('[data-popup-task]');if(addTask){e.preventDefault();e.stopImmediatePropagation();closeModal();calendarTask(addTask.dataset.popupTask);return}
   const addUrgent=e.target.closest('[data-popup-urgent]');if(addUrgent){e.preventDefault();e.stopImmediatePropagation();closeModal();urgentForm({},addUrgent.dataset.popupUrgent)}
